@@ -1,5 +1,6 @@
 "use client";
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 export const CTASection = () => {
   return (
@@ -27,14 +28,16 @@ export const CTASection = () => {
             Create quizzes and compete with friends.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-12 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-lg font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-purple-500/40"
-              aria-label="Start creating quizzes for free"
-            >
-              Start Creating Free
-            </motion.button>
+            <Link href="/create">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-12 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-lg font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-purple-500/40"
+                aria-label="Start creating quizzes for free"
+              >
+                Start Creating Free
+              </motion.button>
+            </Link>
           </div>
         </motion.div>
       </div>

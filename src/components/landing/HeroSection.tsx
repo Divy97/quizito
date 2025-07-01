@@ -3,6 +3,7 @@ import { ArrowRight, Play } from 'lucide-react';
 import { motion, useAnimation, useInView } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 import { TypewriterText } from './TypewriterText';
+import Link from 'next/link';
 
 export const HeroSection = () => {
   const heroRef = useRef(null);
@@ -67,16 +68,18 @@ export const HeroSection = () => {
         </motion.p>
 
         <motion.div variants={itemVariants} className="flex flex-col md:flex-row gap-6 justify-center items-center mb-16">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 text-lg font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-purple-500/40"
-            aria-label="Start creating quizzes for free"
-          >
-            <span className="relative z-10">Start Creating Free</span>
-            <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-700 to-pink-700 opacity-0 transition-opacity group-hover:opacity-100" />
-          </motion.button>
+          <Link href="/create">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 text-lg font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-purple-500/40"
+              aria-label="Start creating quizzes for free"
+            >
+              <span className="relative z-10">Start Creating Free</span>
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-700 to-pink-700 opacity-0 transition-opacity group-hover:opacity-100" />
+            </motion.button>
+          </Link>
           
           <motion.button
             whileHover={{ scale: 1.05 }}
