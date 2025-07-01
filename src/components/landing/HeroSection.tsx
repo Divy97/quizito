@@ -63,7 +63,7 @@ export const HeroSection = () => {
           variants={itemVariants} 
           className="max-w-[600px] mx-auto text-lg text-[#A0A0A0] md:text-xl mb-12"
         >
-          The fastest way to create engaging quizzes from any content. AI-powered, instantly shareable, and built for the modern web.
+          The fastest way to create engaging quizzes from any content. AI-powered, instantly shareable, and fun.
         </motion.p>
 
         <motion.div variants={itemVariants} className="flex flex-col md:flex-row gap-6 justify-center items-center mb-16">
