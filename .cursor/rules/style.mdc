@@ -1,0 +1,37 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+🎨 Visual Style Guide for Quizito
+🖤 Theme: Dark, Minimal, Vibrant
+Element	Style
+Background	Very dark gray or near-black (#0D0D0D, #121212)
+Surface cards	Slightly lighter dark (#1A1A1A, #1E1E1E)
+Primary color	Vibrant accent (blue, violet, green — minimal usage)
+Text (main)	Light gray (#E0E0E0), not pure white
+Text (muted)	Gray (#A0A0A0), for sublabels
+Border color	#2A2A2A or soft border glow (#3A3A3A)
+Shadows	Soft, subtle highlights — not too much blur
+
+🌈 Minimal Color Palette
+Use Case	Color	Hex	Notes
+Primary Accent	Indigo	#6366F1	Vibrant but elegant
+Secondary Accent	Teal	#14B8A6	Use for hover/focus states
+Danger	Red	#EF4444	For wrong answers, errors
+Success	Green	#22C55E	For correct answers, success msg
+Background	Near Black	#0D0D0D	Body background
+Surface/Card	Dark Gray	#1E1E1E	Cards, containers
+Text	Light Gray	#E0E0E0	Main readable text
+
+✅ Avoid overusing colors — keep most UI grayscale, and use 1–2 accent colors for actions, highlights, scores.
+
+🧱 UI Design System (Tailwind + ShadCN)
+Typography
+Font: Use a modern geometric sans-serif like Inter, Outfit, or Satoshi
+
+Headlines: text-2xl font-semibold text-white
+
+Body: text-base text-gray-300
+
+Muted text: text-sm text-gray-500 
