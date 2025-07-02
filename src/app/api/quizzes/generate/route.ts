@@ -14,6 +14,7 @@ const quizGenSchema = z.object({
   source_data: z.string().min(3, 'The source must be at least 3 characters long.'),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   question_count: z.number().min(3).max(10),
+  is_public: z.boolean(),
 });
 
 export async function POST(req: Request) {
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: validation.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { source_type, source_data, difficulty, question_count, title, description } = validation.data;
+    const { source_type, source_data, difficulty, question_count, title, description, is_public } = validation.data;
 
     try {
       if (source_type === 'topic') {
@@ -70,6 +71,7 @@ export async function POST(req: Request) {
             source_data,
             difficulty,
             question_count,
+            is_public,
           })
           .select('id')
           .single();

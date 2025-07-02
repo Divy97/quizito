@@ -13,7 +13,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { quizId } = params;
+    const { quizId } = await params;
 
     if (!quizId) {
       return NextResponse.json({ error: 'Quiz ID is required' }, { status: 400 });
