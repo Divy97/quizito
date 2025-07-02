@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { FloatingParticles } from '@/components/landing/FloatingParticles';
+import { PageBackground } from '@/components/ui/page-background';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { StepsSection } from '@/components/landing/StepsSection';
 import { InputTypesSection } from '@/components/landing/InputTypesSection';
@@ -19,28 +19,28 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0D0D0D] text-[#E0E0E0] relative overflow-hidden">
-      <FloatingParticles />
-      
-      {/* Cursor Glow Effect */}
-      <div
-        className="fixed w-96 h-96 pointer-events-none z-50"
-        style={{
-          left: mousePosition.x - 192,
-          top: mousePosition.y - 192,
-          background: 'radial-gradient(circle, rgba(147,51,234,0.1) 0%, transparent 70%)',
-        }}
-        aria-hidden="true"
-      />
+    <PageBackground variant="hero">
+      <div className="flex flex-col min-h-screen text-[#E0E0E0] relative">
+        {/* Cursor Glow Effect */}
+        <div
+          className="fixed w-96 h-96 pointer-events-none z-50"
+          style={{
+            left: mousePosition.x - 192,
+            top: mousePosition.y - 192,
+            background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
+          }}
+          aria-hidden="true"
+        />
 
-      <main className="flex-1 relative z-10">
-        <HeroSection />
-        <StepsSection />
-        <InputTypesSection />
-        <CTASection />
-      </main>
+        <main className="flex-1 relative z-10">
+          <HeroSection />
+          <StepsSection />
+          <InputTypesSection />
+          <CTASection />
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </PageBackground>
   );
 }
