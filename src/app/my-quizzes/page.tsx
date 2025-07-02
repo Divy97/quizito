@@ -11,10 +11,24 @@ async function getMyQuizzes(userId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('quizzes')
-    .select('id, title, description, question_count, created_at')
+    .select(`
+      id, 
+      title, 
+      description, 
+      question_count, 
+      created_at,
+      quiz_attempts (
+        id,
+        score,
+        submitted_at
+      )
+    `)
     .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .eq('quiz_attempts.user_id', userId)
+    .order('created_at', { ascending: false })
+    .order('submitted_at', { referencedTable: 'quiz_attempts', ascending: false });
 
+  console.log(data);
   if (error) {
     console.error('Error fetching user quizzes:', error);
     return [];
@@ -22,7 +36,9 @@ async function getMyQuizzes(userId: string) {
   return data;
 }
 
-export type MyQuiz = Tables<'quizzes'>;
+export type MyQuiz = Pick<Tables<'quizzes'>, 'id' | 'title' | 'description' | 'question_count' | 'created_at'> & {
+  quiz_attempts: Array<Pick<Tables<'quiz_attempts'>, 'id' | 'score' | 'submitted_at'>>;
+};
 
 export default async function MyQuizzesPage() {
   const supabase = await createClient();
