@@ -1,51 +1,58 @@
-"use client";
+import { createClient } from '@/lib/supabase/server';
+import { AppLayout } from '@/components/ui/app-layout';
+import { PageTitle, BodyText } from '@/components/ui/typography';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Lock } from 'lucide-react';
+import type { Tables } from '@/lib/supabase/types';
+import { QuizList } from '@/components/quiz/QuizList';
 
-import { AppLayout } from "@/components/ui/app-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, FileText } from "lucide-react";
-import Link from "next/link";
+async function getMyQuizzes(userId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('quizzes')
+    .select('id, title, description, question_count, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
 
-export default function MyQuizzesPage() {
+  if (error) {
+    console.error('Error fetching user quizzes:', error);
+    return [];
+  }
+  return data;
+}
+
+export type MyQuiz = Tables<'quizzes'>;
+
+export default async function MyQuizzesPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center text-center p-4 min-h-[calc(100vh-120px)]">
+          <Lock className="h-12 w-12 text-purple-400 mb-4" />
+          <PageTitle>Access Denied</PageTitle>
+          <BodyText className="mb-6">You must be logged in to view your quizzes.</BodyText>
+          <Button asChild>
+            <Link href="/login">Go to Login</Link>
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const quizzes = await getMyQuizzes(user.id);
+
   return (
     <AppLayout>
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-[#E0E0E0] mb-2">My Quizzes</h1>
-              <p className="text-[#A0A0A0]">Manage and view all your created quizzes</p>
-            </div>
-            <Link href="/create">
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
-                <Plus className="mr-2 h-4 w-4" />
-                Create New Quiz
-              </Button>
-            </Link>
-          </div>
-
-          {/* Empty State */}
-          <Card className="bg-[#1E1E1E] border-[#2A2A2A]">
-            <CardContent className="py-16">
-              <div className="text-center">
-                <FileText className="h-16 w-16 text-[#A0A0A0] mx-auto mb-6" />
-                <h3 className="text-xl font-semibold text-[#E0E0E0] mb-2">
-                  No quizzes yet
-                </h3>
-                <p className="text-[#A0A0A0] mb-6 max-w-md mx-auto">
-                  You haven't created any quizzes yet. Start by creating your first quiz from any content you like.
-                </p>
-                <Link href="/create">
-                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Your First Quiz
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="w-full max-w-5xl mx-auto px-4 py-8">
+        <header className="mb-8 text-center">
+          <PageTitle>My Quizzes</PageTitle>
+          <BodyText className="text-gray-400">Here are all the quizzes you have created.</BodyText>
+        </header>
+        <QuizList quizzes={quizzes as MyQuiz[]} />
       </div>
     </AppLayout>
   );
