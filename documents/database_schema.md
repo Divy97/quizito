@@ -25,6 +25,7 @@ CREATE TABLE quizzes (
     description TEXT,
     source_type TEXT CHECK (source_type IN ('youtube', 'url', 'document', 'topic')) NOT NULL, -- e.g., 'youtube', 'url', 'document', 'topic'
     source_data TEXT NOT NULL, -- e.g., 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'https://www.google.com', 'https://www.google.com', 'https://www.google.com'
+    difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard')) NOT NULL DEFAULT 'medium',
     is_public BOOLEAN DEFAULT FALSE NOT NULL,
     max_attempts    integer DEFAULT 1,
     question_count  integer NOT NULL,
