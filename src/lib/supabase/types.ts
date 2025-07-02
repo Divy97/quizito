@@ -355,3 +355,5 @@ export const Constants = {
     },
   },
 } as const
+
+export type LeaderboardEntry = Pick<Tables<'quiz_attempts'>, 'nickname' | 'score' | 'time_taken_seconds'>;
