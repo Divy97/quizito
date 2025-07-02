@@ -8,18 +8,25 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { PageTitle, BodyText } from '@/components/ui/typography';
 import { AppLayout } from '../ui/app-layout';
-import { Check, X, RefreshCw, BarChart } from 'lucide-react';
+import { Check, X, RefreshCw, BarChart, User, Play, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { LeaderboardEntry } from '@/lib/supabase/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type ClientQuizData = {
   id: string;
   title: string | null;
   description: string | null;
   questions: ClientQuestion[];
+  isPublic: boolean;
 };
 
 interface QuizPlayerProps {
   quizData: ClientQuizData;
+  isOwner: boolean;
 }
 
 type QuestionResult = {
@@ -35,19 +42,38 @@ type QuizResultsType = {
   correctAnswers: number;
   score: number;
   results: QuestionResult[];
+  leaderboard: LeaderboardEntry[];
 };
 
-export function QuizPlayer({ quizData }: QuizPlayerProps) {
+export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
-  const [quizState, setQuizState] = useState<'playing' | 'submitting' | 'finished'>('playing');
+  const [quizState, setQuizState] = useState<'pending' | 'playing' | 'submitting' | 'finished'>('pending');
   const [results, setResults] = useState<QuizResultsType | null>(null);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(0);
   const [answerStatus, setAnswerStatus] = useState<'correct' | 'incorrect' | null>(null);
+  const [nickname, setNickname] = useState<string | null>(null);
 
   const totalQuestions = quizData.questions.length;
   const currentQuestion = quizData.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex) / totalQuestions) * 100;
+
+  const needsNickname = quizData.isPublic && !isOwner;
+
+  useEffect(() => {
+    if (needsNickname) {
+      setQuizState('pending');
+    } else {
+      setQuizState('playing');
+      setStartTime(Date.now());
+    }
+  }, [needsNickname]);
+
+  const handleStartQuiz = (name: string) => {
+    setNickname(name);
+    setQuizState('playing');
+    setStartTime(Date.now());
+  };
 
   const handleOptionSelect = (questionId: string, optionId: string) => {
     if (answerStatus) return;
@@ -82,6 +108,7 @@ export function QuizPlayer({ quizData }: QuizPlayerProps) {
           quizId: quizData.id,
           answers: finalAnswers,
           timeTaken,
+          nickname: needsNickname ? nickname : null,
         }),
       });
 
@@ -96,8 +123,17 @@ export function QuizPlayer({ quizData }: QuizPlayerProps) {
     }
   };
 
+  if (quizState === 'pending' && needsNickname) {
+    return <NicknameDialog onStart={handleStartQuiz} quizTitle={quizData.title} />;
+  }
+
   if (quizState === 'finished' && results) {
-    return <QuizResults quizData={quizData} results={results} />;
+    return <QuizResults quizData={quizData} results={results} nickname={nickname} />;
+  }
+
+  if (quizState !== 'playing' || !currentQuestion) {
+    // Render nothing or a loading spinner if not playing or if question isn't loaded yet
+    return null;
   }
 
   return (
@@ -157,14 +193,78 @@ export function QuizPlayer({ quizData }: QuizPlayerProps) {
   );
 }
 
-function QuizResults({ quizData, results }: { quizData: ClientQuizData, results: QuizResultsType }) {
+function NicknameDialog({ onStart, quizTitle }: { onStart: (nickname: string) => void; quizTitle: string | null }) {
+  const [name, setName] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      onStart(name.trim());
+    }
+  };
+
+  return (
+    <AppLayout>
+      <Dialog open={true}>
+        <DialogContent className="bg-[#1E1E1E] border-[#2A2A2A] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <User className="h-5 w-5 text-purple-400" />
+              Enter the Arena!
+            </DialogTitle>
+            <DialogDescription className="text-[#A0A0A0]">
+              You&apos;re about to take the public quiz: <span className="font-bold text-purple-300">{quizTitle}</span>.
+              <br />
+              Enter a nickname to appear on the leaderboard.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            <div>
+              <Label htmlFor="nickname" className="text-sm font-medium text-[#E0E0E0]">
+                Your Nickname
+              </Label>
+              <Input
+                id="nickname"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="E.g., Captain Quiz"
+                className="mt-2 bg-[#2A2A2A]/50 border-[#3A3A3A] text-white"
+                required
+                maxLength={30}
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-[#6366F1] to-[#14B8A6] hover:from-[#5B5CF6] hover:to-[#10B981] text-white"
+            >
+              <Play className="mr-2 h-4 w-4" />
+              Start Quiz
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </AppLayout>
+  );
+}
+
+function QuizResults({
+  quizData,
+  results,
+  nickname,
+}: {
+  quizData: ClientQuizData;
+  results: QuizResultsType;
+  nickname: string | null;
+}) {
   const router = useRouter();
+  const isPublicQuiz = quizData.isPublic;
 
   return (
     <AppLayout>
       <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-120px)]">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
-          <Card className="w-full max-w-3xl bg-[#1E1E1E]/95 border-[#2A2A2A] shadow-2xl shadow-purple-500/10 backdrop-blur-sm">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="w-full max-w-4xl space-y-8">
+          {/* Results Card */}
+          <Card className="w-full bg-[#1E1E1E]/95 border-[#2A2A2A] shadow-2xl shadow-purple-500/10 backdrop-blur-sm">
             <CardHeader className="text-center items-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.2, type: 'spring' } }}>
                 <div className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white ${results.score >= 70 ? 'bg-green-500' : 'bg-red-500'}`}>
@@ -219,6 +319,51 @@ function QuizResults({ quizData, results }: { quizData: ClientQuizData, results:
               </div>
             </CardContent>
           </Card>
+          
+          {/* Leaderboard Card */}
+          {isPublicQuiz && (
+            <Card className="bg-[#1E1E1E]/95 border-[#2A2A2A] shadow-lg">
+              <CardHeader>
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-400" />
+                  Leaderboard
+                </h2>
+              </CardHeader>
+              <CardContent>
+                {results.leaderboard.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b-[#3A3A3A]">
+                        <TableHead className="w-[60px] text-center">Rank</TableHead>
+                        <TableHead>Nickname</TableHead>
+                        <TableHead className="text-right">Score</TableHead>
+                        <TableHead className="text-right">Time</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {results.leaderboard.map((entry, index) => {
+                        const isCurrentUser = entry.nickname === nickname;
+                        return (
+                          <TableRow key={index} className={`border-b-0 ${isCurrentUser ? 'bg-purple-500/10' : ''}`}>
+                            <TableCell className="text-center font-bold text-lg">
+                              {index === 0 ? '🏆' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                            </TableCell>
+                            <TableCell className={`font-medium ${isCurrentUser ? 'text-purple-300' : 'text-gray-200'}`}>{entry.nickname}</TableCell>
+                            <TableCell className="text-right font-semibold text-green-400">{Math.round(entry.score)}%</TableCell>
+                            <TableCell className="text-right text-gray-400">{entry.time_taken_seconds}s</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    <p>You&apos;re the first to take this quiz! Your score is at the top of the leaderboard.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       </div>
     </AppLayout>
