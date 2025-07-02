@@ -167,17 +167,21 @@ CREATE POLICY "Users can view questions for quizzes they can access."
   );
 
 -- Quiz Attempts Policies
-CREATE POLICY "Anyone can create a quiz attempt for a public quiz."
+CREATE POLICY "Users can create attempts for public or their own private quizzes."
   ON quiz_attempts FOR INSERT WITH CHECK (
     EXISTS (
-      SELECT 1 FROM quizzes WHERE quizzes.id = quiz_attempts.quiz_id AND quizzes.is_public = true
+      SELECT 1 FROM quizzes
+      WHERE quizzes.id = quiz_attempts.quiz_id
+      AND (quizzes.is_public = true OR quizzes.user_id = auth.uid())
     )
   );
 
-CREATE POLICY "Anyone can view all attempts for a public quiz (for the leaderboard)."
+CREATE POLICY "Users can view attempts for public or their own quizzes."
   ON quiz_attempts FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM quizzes WHERE quizzes.id = quiz_attempts.quiz_id AND quizzes.is_public = true
+      SELECT 1 FROM quizzes
+      WHERE quizzes.id = quiz_attempts.quiz_id
+      AND (quizzes.is_public = true OR quizzes.user_id = auth.uid())
     )
   );
 
