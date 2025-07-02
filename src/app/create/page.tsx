@@ -321,25 +321,28 @@ export default function CreatePage() {
                         className="bg-[#2A2A2A]/50 border-[#3A3A3A] text-[#E0E0E0] focus:border-[#6366F1]/50 focus:ring-[#6366F1]/20 transition-all"
                       />
                     </motion.div>
-
-                    {/* Public Toggle */}
-                    <motion.div variants={itemVariants} className="space-y-2">
-                      <Label htmlFor="is-public" className="text-[#E0E0E0] font-medium text-sm">
-                        Visibility
-                      </Label>
-                      <div className="flex items-center h-10 px-3 rounded-md bg-[#2A2A2A]/50 border border-[#3A3A3A] transition-all hover:border-[#4A4A4A]">
-                        <Switch 
-                          id="is-public"
-                          checked={formData.isPublic}
-                          onCheckedChange={(checked) => handleInputChange("isPublic", checked)}
-                          className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-[#6366F1] data-[state=checked]:to-[#14B8A6]"
-                        />
-                        <Label htmlFor="is-public" className="ml-2 text-sm text-[#A0A0A0] cursor-pointer">
-                          {formData.isPublic ? "Public" : "Private"}
-                        </Label>
-                      </div>
-                    </motion.div>
                   </div>
+
+                  {/* Public Toggle */}
+                  <motion.div variants={itemVariants}>
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-[#2A2A2A]/50 border border-[#3A3A3A]">
+                      <div>
+                        <Label htmlFor="public-switch" className="flex items-center gap-2 font-medium text-[#E0E0E0]">
+                          <Lock className="h-4 w-4" />
+                          Make Quiz Public
+                        </Label>
+                        <p className="text-sm text-[#A0A0A0] mt-1">
+                          Public quizzes have a shareable link and a leaderboard. Private quizzes are only for you.
+                        </p>
+                      </div>
+                      <Switch
+                        id="public-switch"
+                        checked={formData.isPublic}
+                        onCheckedChange={(value) => handleInputChange('isPublic', value)}
+                        className="data-[state=checked]:bg-[#14B8A6] data-[state=unchecked]:bg-gray-600"
+                      />
+                    </div>
+                  </motion.div>
 
                   {/* Description */}
                   <motion.div variants={itemVariants} className="space-y-2">

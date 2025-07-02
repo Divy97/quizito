@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { QuizPlayer } from '@/components/quiz/QuizPlayer';
-import type { Tables } from '@/lib/supabase/types';
+import type { Tables, LeaderboardEntry } from '@/lib/supabase/types';
+import { PublicQuizDashboard } from '@/components/quiz/PublicQuizDashboard';
 
 type QuestionOption = Pick<Tables<'question_options'>, 'id' | 'option_text'>;
 
@@ -12,13 +13,36 @@ export type ClientQuestion = Pick<Tables<'questions'>, 'id' | 'question'> & {
 
 type ClientQuizData = Pick<Tables<'quizzes'>, 'id' | 'title' | 'description'> & {
   questions: ClientQuestion[];
+  isPublic: boolean;
 };
 
-async function getQuizForPlayer(quizId: string): Promise<ClientQuizData | null> {
+type QuizForPlayerResult = ClientQuizData & {
+  isPublic: boolean;
+  isOwner: boolean;
+};
+
+async function getLeaderboard(quizId: string): Promise<LeaderboardEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('quiz_attempts')
+    .select('nickname, score, time_taken_seconds')
+    .eq('quiz_id', quizId)
+    .order('score', { ascending: false })
+    .order('time_taken_seconds', { ascending: true })
+    .limit(100);
+
+  if (error) {
+    console.error('Error fetching leaderboard:', error);
+    return [];
+  }
+  return data;
+}
+
+async function getQuizForPlayer(quizId: string): Promise<QuizForPlayerResult | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data, error } = await supabase
+  const { data: quizData, error } = await supabase
     .from('quizzes')
     .select(`
       id,
@@ -39,45 +63,52 @@ async function getQuizForPlayer(quizId: string): Promise<ClientQuizData | null> 
     .eq('id', quizId)
     .single();
 
-  if (error || !data) {
+  if (error || !quizData) {
     return null;
   }
 
-  if (!data.is_public && data.user_id !== user?.id) {
+  const isOwner = user ? quizData.user_id === user.id : false;
+
+  if (!quizData.is_public && !isOwner) {
     return null;
   }
   
-  // Reshape data for the client, hiding sensitive fields and simplifying the structure.
-  const clientQuestions: ClientQuestion[] = data.questions.map(q => {
+  const clientQuestions: ClientQuestion[] = quizData.questions.map(q => {
     const correctOption = q.question_options.find(opt => opt.is_correct);
     return {
       id: q.id,
       question: q.question,
-      // Strip the 'is_correct' flag from the options sent to the client.
       question_options: q.question_options.map(({ id, option_text }) => ({ id, option_text })),
-      correctOptionId: correctOption?.id || '', // Pass only the ID of the correct option.
+      correctOptionId: correctOption?.id || '',
     };
   });
   
-  // Filter out any questions that might not have a correct answer for some reason
   const validQuestions = clientQuestions.filter(q => q.correctOptionId);
 
   return {
-    id: data.id,
-    title: data.title,
-    description: data.description,
+    id: quizData.id,
+    title: quizData.title,
+    description: quizData.description,
     questions: validQuestions,
+    isPublic: quizData.is_public,
+    isOwner: isOwner,
   };
 }
 
 
 export default async function QuizPage({ params }: { params: { quizId: string } }) {
-    const quizId = await params.quizId;
+  const {quizId} = await params;
   const quizData = await getQuizForPlayer(quizId);
 
-  if (!quizData || quizData.questions.length === 0) {
+  if (!quizData) {
     notFound();
   }
 
-  return <QuizPlayer quizData={quizData} />;
+  if (quizData.isPublic && quizData.isOwner) {
+    const {quizId} = await params;
+    const leaderboard = await getLeaderboard(quizId);
+    return <PublicQuizDashboard quizData={quizData} leaderboard={leaderboard} />;
+  }
+  
+  return <QuizPlayer quizData={quizData} isOwner={quizData.isOwner} />;
 } 
