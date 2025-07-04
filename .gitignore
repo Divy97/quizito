@@ -1,0 +1,83 @@
+/backend/node_modules
+/backend/dist
+/backend/package-lock.json
+/backend/package.json
+/backend/tsconfig.json
+/backend/tsconfig.node.json
+/backend/tsconfig.app.json
+/backend/tsconfig.spec.json
+/backend/tsconfig.base.json
+/backend/tsconfig.json
+/backend/tsconfig.app.json
+/backend/tsconfig.spec.json
+/backend/tsconfig.base.json
+/backend/tsconfig.json
+/backend/tsconfig.app.json
+/backend/tsconfig.spec.json
+/backend/tsconfig.base.json
+/backend/tsconfig.json
+/backend/tsconfig.app.json
+/backend/tsconfig.spec.json
+/backend/.env.*
+
+/documents
+
+/frontend/node_modules
+/frontend/dist
+/frontend/package-lock.json
+/frontend/package.json
+/frontend/tsconfig.json
+/frontend/tsconfig.node.json
+/frontend/tsconfig.app.json
+/frontend/tsconfig.spec.json
+/frontend/tsconfig.base.json
+/frontend/tsconfig.json
+/frontend/.env.*
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+frontend/coverage
+
+# next.js
+frontend/.next/
+frontend/out/
+
+# production
+frontend/build
+
+# misc
+frontend/.DS_Store
+frontend/*.pem
+
+# debug
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+frontend/.env*
+
+# vercel
+frontend/.vercel
+
+# typescript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# local environment variables
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+frontend/.env.test.local
