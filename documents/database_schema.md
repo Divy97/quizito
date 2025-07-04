@@ -1,18 +1,20 @@
--- 1. PROFILES TABLE
--- Stores public user data. This is created automatically by a trigger
--- when a new user signs up. Links to auth.users via a one-to-one relationship.
-CREATE TABLE profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    username TEXT UNIQUE DEFAULT concat('user_', substr(gen_random_uuid()::text, 1, 8)),
+-- 1. USERS TABLE
+-- Stores user accounts, replacing Supabase auth.
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    google_id TEXT UNIQUE NOT NULL, -- The unique ID from Google
+    email TEXT UNIQUE NOT NULL,
+    username TEXT NOT NULL,
     avatar_url TEXT,
-    streak_count  integer DEFAULT 0,
+    streak_count INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Comments for profiles table
-COMMENT ON TABLE profiles IS 'Stores public profile information for each user.';
-COMMENT ON COLUMN profiles.id IS 'References the internal Supabase auth user id.';
+-- Comments for users table
+COMMENT ON TABLE users IS 'Stores user accounts, replacing Supabase auth.';
+COMMENT ON COLUMN users.id IS 'The primary key for the user.';
+COMMENT ON COLUMN users.google_id IS 'The unique identifier from Google OAuth.';
 
 -- 2. QUIZZES TABLE
 -- The central table for storing quiz metadata.
@@ -20,7 +22,7 @@ COMMENT ON COLUMN profiles.id IS 'References the internal Supabase auth user id.
 
 CREATE TABLE quizzes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     description TEXT,
     source_type TEXT CHECK (source_type IN ('youtube', 'url', 'document', 'topic')) NOT NULL, -- e.g., 'youtube', 'url', 'document', 'topic'
@@ -72,7 +74,7 @@ COMMENT ON COLUMN question_options.is_correct IS 'True if the option is the corr
 CREATE TABLE quiz_attempts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- Track if a logged-in user took it
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- Track if a logged-in user took it
     nickname TEXT NOT NULL, -- Mandatory for leaderboard display
     score INTEGER NOT NULL,
     time_taken_seconds INTEGER NOT NULL,
@@ -101,115 +103,8 @@ COMMENT ON COLUMN quiz_exports.export_type IS 'The type of export (Google Form o
 COMMENT ON COLUMN quiz_exports.export_url IS 'The URL of the exported quiz.';
 
 
--- 5. SETUP PROFILES TRIGGER
--- A helper function and trigger to automatically create a user profile
--- upon new user signup.
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, avatar_url)
-  VALUES (new.id, new.raw_user_meta_data->>'avatar_url');
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
-
--- 6. ENABLE ROW LEVEL SECURITY (RLS)
--- This is a critical step to ensure data privacy and security.
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE quizzes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE quiz_attempts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE quiz_exports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE question_options ENABLE ROW LEVEL SECURITY;
-
-
--- 7. RLS POLICIES
--- Define the rules for who can access or modify data.
-
--- Profiles Policies
-CREATE POLICY "Public profiles are viewable by everyone."
-  ON profiles FOR SELECT USING (true);
-
-CREATE POLICY "Users can insert their own profile."
-  ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Users can update their own profile."
-  ON profiles FOR UPDATE USING (auth.uid() = id);
-
--- Quizzes Policies
-CREATE POLICY "Users can create quizzes."
-  ON quizzes FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can view, update, and delete their own quizzes."
-  ON quizzes FOR ALL USING (auth.uid() = user_id);
-
-CREATE POLICY "Anyone can view public quizzes."
-  ON quizzes FOR SELECT USING (is_public = true);
-
--- Questions Policies
-CREATE POLICY "Users can create questions for their own quizzes."
-  ON questions FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM quizzes WHERE quizzes.id = questions.quiz_id AND quizzes.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can view questions for quizzes they can access."
-  ON questions FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM quizzes WHERE quizzes.id = questions.quiz_id
-    )
-  );
-
--- Quiz Attempts Policies
-CREATE POLICY "Users can create attempts for public or their own private quizzes."
-  ON quiz_attempts FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM quizzes
-      WHERE quizzes.id = quiz_attempts.quiz_id
-      AND (quizzes.is_public = true OR quizzes.user_id = auth.uid())
-    )
-  );
-
-CREATE POLICY "Users can view attempts for public or their own quizzes."
-  ON quiz_attempts FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM quizzes
-      WHERE quizzes.id = quiz_attempts.quiz_id
-      AND (quizzes.is_public = true OR quizzes.user_id = auth.uid())
-    )
-  );
-
-CREATE POLICY "Users can export their own quizzes"
-  ON quiz_exports FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM quizzes WHERE quizzes.id = quiz_exports.quiz_id AND quizzes.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can insert options for their own questions."
-  ON question_options FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM questions 
-      JOIN quizzes ON quizzes.id = questions.quiz_id
-      WHERE questions.id = question_options.question_id AND quizzes.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can view options for questions they can access."
-  ON question_options FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM questions 
-      JOIN quizzes ON quizzes.id = questions.quiz_id
-      WHERE questions.id = question_options.question_id
-    )
-  );
-
+-- Note: RLS policies and database-level triggers have been removed.
+-- Authorization and user creation logic will be handled by the Express.js application layer.
 
 CREATE INDEX idx_questions_quiz_id ON questions(quiz_id);
 CREATE INDEX idx_question_options_question_id ON question_options(question_id);
