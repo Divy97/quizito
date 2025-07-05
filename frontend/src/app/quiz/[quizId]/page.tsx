@@ -1,114 +1,108 @@
-import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { AppLayout } from '@/components/ui/app-layout';
 import { QuizPlayer } from '@/components/quiz/QuizPlayer';
-import type { Tables, LeaderboardEntry } from '@/lib/supabase/types';
 import { PublicQuizDashboard } from '@/components/quiz/PublicQuizDashboard';
+import { PageTitle, MutedText } from '@/components/ui/typography';
+import { Lock } from 'lucide-react';
 
-type QuestionOption = Pick<Tables<'question_options'>, 'id' | 'option_text'>;
+// Define the types that match our backend API response
+type QuestionOption = {
+  id: string;
+  option_text: string;
+};
 
-export type ClientQuestion = Pick<Tables<'questions'>, 'id' | 'question'> & {
-  question_options: QuestionOption[];
+export type ClientQuestion = {
+  id: string;
+  question: string;
+  options: QuestionOption[];
   correctOptionId: string;
 };
 
-type ClientQuizData = Pick<Tables<'quizzes'>, 'id' | 'title' | 'description'> & {
+type ClientQuizData = {
+  id: string;
+  title: string;
+  description: string | null;
   questions: ClientQuestion[];
-  isPublic: boolean;
+  is_public: boolean;
 };
 
-type QuizForPlayerResult = ClientQuizData & {
-  isPublic: boolean;
+type LeaderboardEntry = {
+  nickname: string;
+  score: number;
+  time_taken_seconds: number;
+};
+
+type QuizPageResult = {
+  id: string;
+  title: string;
+  description: string | null;
+  questions: ClientQuestion[];
+  is_public: boolean;
   isOwner: boolean;
+  leaderboard: LeaderboardEntry[];
 };
 
-async function getLeaderboard(quizId: string): Promise<LeaderboardEntry[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('quiz_attempts')
-    .select('nickname, score, time_taken_seconds')
-    .eq('quiz_id', quizId)
-    .order('score', { ascending: false })
-    .order('time_taken_seconds', { ascending: true })
-    .limit(100);
+async function getQuizPageData(quizId: string): Promise<QuizPageResult | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
 
-  if (error) {
-    console.error('Error fetching leaderboard:', error);
-    return [];
-  }
-  return data;
-}
-
-async function getQuizForPlayer(quizId: string): Promise<QuizForPlayerResult | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const { data: quizData, error } = await supabase
-    .from('quizzes')
-    .select(`
-      id,
-      title,
-      description,
-      is_public,
-      user_id,
-      questions (
-        id,
-        question,
-        question_options (
-          id,
-          option_text,
-          is_correct
-        )
-      )
-    `)
-    .eq('id', quizId)
-    .single();
-
-  if (error || !quizData) {
-    return null;
-  }
-
-  const isOwner = user ? quizData.user_id === user.id : false;
-
-  if (!quizData.is_public && !isOwner) {
-    return null;
-  }
-  
-  const clientQuestions: ClientQuestion[] = quizData.questions.map(q => {
-    const correctOption = q.question_options.find(opt => opt.is_correct);
-    return {
-      id: q.id,
-      question: q.question,
-      question_options: q.question_options.map(({ id, option_text }) => ({ id, option_text })),
-      correctOptionId: correctOption?.id || '',
-    };
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Cookie: `token=${token}` }),
+    },
+    cache: 'no-store', // Ensure fresh data for each request
   });
-  
-  const validQuestions = clientQuestions.filter(q => q.correctOptionId);
 
-  return {
-    id: quizData.id,
-    title: quizData.title,
-    description: quizData.description,
-    questions: validQuestions,
-    isPublic: quizData.is_public,
-    isOwner: isOwner,
-  };
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
+    // For other errors, we might want to throw or handle differently
+    throw new Error('Failed to fetch quiz data');
+  }
+
+  return response.json();
 }
 
+// NOTE: Leaderboard data is now fetched inside the submitQuiz controller,
+// so this function is no longer needed on this page.
 
 export default async function QuizPage({ params }: { params: { quizId: string } }) {
-  const {quizId} = await params;
-  const quizData = await getQuizForPlayer(quizId);
+  const { quizId } = await params;
+  const quizData = await getQuizPageData(quizId);
 
   if (!quizData) {
     notFound();
   }
-
-  if (quizData.isPublic && quizData.isOwner) {
-    const {quizId} = await params;
-    const leaderboard = await getLeaderboard(quizId);
-    return <PublicQuizDashboard quizData={quizData} leaderboard={leaderboard} />;
-  }
   
-  return <QuizPlayer quizData={quizData} isOwner={quizData.isOwner} />;
+  // Logic to show a simple "access denied" for non-owners of private quizzes
+  // The API prevents data leakage, this is just a friendly UI.
+  if (!quizData.is_public && !quizData.isOwner) {
+    return (
+       <AppLayout>
+        <div className="flex flex-col items-center justify-center text-center p-4 min-h-[calc(100vh-120px)]">
+          <Lock className="h-12 w-12 text-purple-400 mb-4" />
+          <PageTitle>Private Quiz</PageTitle>
+          <MutedText>This quiz is private and can only be viewed by its owner.</MutedText>
+        </div>
+      </AppLayout>
+    )
+  }
+
+  // If the user is the owner of a public quiz, show them the dashboard.
+  if (quizData.is_public && quizData.isOwner) {
+    return <PublicQuizDashboard quizData={{...quizData, isPublic: quizData.is_public}} leaderboard={quizData.leaderboard} />;
+  }
+
+  // Otherwise, show the quiz player for them to take the quiz.
+  return (
+    <AppLayout>
+      <div className="w-full max-w-4xl mx-auto px-4 py-8">
+        <QuizPlayer quizData={quizData} isOwner={quizData.isOwner} />
+      </div>
+    </AppLayout>
+  );
 } 

@@ -62,7 +62,7 @@ export const HeroSection = () => {
 
         <motion.p 
           variants={itemVariants} 
-          className="max-w-[600px] mx-auto text-lg text-[#A0A0A0] md:text-xl mb-12"
+          className="max-w-[600px] mx-auto text-lg text-[var(--quizito-text-secondary)] md:text-xl mb-12 font-medium"
         >
           The fastest way to create engaging quizzes from any content. AI-powered, instantly shareable, and fun.
         </motion.p>
@@ -72,19 +72,19 @@ export const HeroSection = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 text-lg font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-purple-500/40"
+              className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[var(--quizito-primary)] to-[var(--quizito-secondary)] px-8 py-4 text-lg font-medium text-white shadow-xl shadow-purple-500/30 transition-all hover:shadow-2xl hover:shadow-purple-500/40"
               aria-label="Start creating quizzes for free"
             >
               <span className="relative z-10">Start Creating Free</span>
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-700 to-pink-700 opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[var(--quizito-primary-hover)] to-[var(--quizito-secondary-hover)] opacity-0 transition-opacity group-hover:opacity-100" />
             </motion.button>
           </Link>
           
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="inline-flex items-center justify-center rounded-xl border border-purple-500/30 px-8 py-4 text-lg font-medium text-purple-300 backdrop-blur-sm transition-all hover:border-purple-500/60 hover:bg-purple-500/10"
+            className="inline-flex items-center justify-center rounded-xl border border-[var(--quizito-primary)]/30 px-8 py-4 text-lg font-medium text-[var(--quizito-primary)] backdrop-blur-sm transition-all hover:border-[var(--quizito-primary)]/60 hover:bg-[var(--quizito-primary)]/10"
             aria-label="Watch demo video"
           >
             <Play className="mr-2 h-5 w-5" aria-hidden="true" />

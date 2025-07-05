@@ -159,15 +159,15 @@ export default function LoginPage() {
                     className="w-full h-12 bg-gradient-to-r from-[#1E1E1E] to-[#2A2A2A] border border-[#3A3A3A] hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/25 text-white transition-all duration-300 group relative overflow-hidden"
                   >
                     <a href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google`}>
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        initial={false}
-                      />
-                      
-                      <div className="relative flex items-center justify-center gap-3">
-                        <Chrome className="h-5 w-5 group-hover:text-purple-300 transition-colors duration-300" />
-                        <span className="font-medium">Continue with Google</span>
-                      </div>
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      initial={false}
+                    />
+                    
+                    <div className="relative flex items-center justify-center gap-3">
+                      <Chrome className="h-5 w-5 group-hover:text-purple-300 transition-colors duration-300" />
+                      <span className="font-medium">Continue with Google</span>
+                    </div>
                     </a>
                   </Button>
                   

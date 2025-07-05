@@ -2,26 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { ClientQuestion } from '@/app/quiz/[quizId]/page';
+import { ClientQuestion } from '@/app/quiz/[quizId]/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { PageTitle, BodyText } from '@/components/ui/typography';
 import { AppLayout } from '../ui/app-layout';
 import { Check, X, RefreshCw, BarChart, User, Play, Trophy } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { LeaderboardEntry } from '@/lib/supabase/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useRouter } from 'next/navigation';
 
 type ClientQuizData = {
   id: string;
   title: string | null;
   description: string | null;
   questions: ClientQuestion[];
-  isPublic: boolean;
+  is_public: boolean;
+};
+
+type LeaderboardEntry = {
+  nickname: string;
+  score: number;
+  time_taken_seconds: number;
 };
 
 interface QuizPlayerProps {
@@ -58,7 +63,7 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
   const currentQuestion = quizData.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex) / totalQuestions) * 100;
 
-  const needsNickname = quizData.isPublic && !isOwner;
+  const needsNickname = quizData.is_public && !isOwner;
 
   useEffect(() => {
     if (needsNickname) {
@@ -101,9 +106,10 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
     const timeTaken = Math.round((Date.now() - startTime) / 1000);
 
     try {
-      const response = await fetch('/api/quizzes/submit', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Send auth cookie
         body: JSON.stringify({
           quizId: quizData.id,
           answers: finalAnswers,
@@ -132,7 +138,6 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
   }
 
   if (quizState !== 'playing' || !currentQuestion) {
-    // Render nothing or a loading spinner if not playing or if question isn't loaded yet
     return null;
   }
 
@@ -158,7 +163,7 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                 <div className="space-y-6">
                   <h2 className="text-xl font-semibold text-center text-gray-100">{currentQuestion.question}</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentQuestion.question_options.map((option) => {
+                    {currentQuestion.options.map((option) => {
                       const isSelected = selectedAnswers[currentQuestion.id] === option.id;
                       const isCorrect = currentQuestion.correctOptionId === option.id;
 
@@ -257,10 +262,9 @@ function QuizResults({
   nickname: string | null;
 }) {
   const router = useRouter();
-  const isPublicQuiz = quizData.isPublic;
+  const isPublicQuiz = quizData.is_public;
 
   return (
-    <AppLayout>
       <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-120px)]">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="w-full max-w-4xl space-y-8">
           {/* Results Card */}
@@ -284,7 +288,7 @@ function QuizResults({
                     <div key={question.id} className="p-4 rounded-lg bg-[#2A2A2A]/50 border border-[#3A3A3A]">
                       <h3 className="font-semibold text-gray-100 mb-2">Question {index + 1}: {question.question}</h3>
                       <div className="space-y-2">
-                        {question.question_options.map(option => {
+                        {question.options.map(option => {
                           const isSelected = result.selectedOptionId === option.id;
                           const isCorrect = result.correctOptionId === option.id;
                           
@@ -366,6 +370,5 @@ function QuizResults({
           )}
         </motion.div>
       </div>
-    </AppLayout>
   );
 } 

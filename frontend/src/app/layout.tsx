@@ -85,7 +85,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -126,11 +126,14 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} bg-[#0D0D0D] text-[#E0E0E0]`}>
+      <body className={`${inter.className} bg-background text-foreground antialiased`}>
         <UserProvider>
           {children}
         </UserProvider>
-        <Toaster theme="dark" position="bottom-right" />
+        <Toaster 
+          theme="dark" 
+          position="bottom-right"
+        />
       </body>
     </html>
   );
