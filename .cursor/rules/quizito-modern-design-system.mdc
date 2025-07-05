@@ -1,0 +1,437 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 🎨 Quizito Modern Design System - Complete UI Revamp
+
+## 🌟 Design Philosophy: **Glassmorphism + Electric Vibrancy**
+
+Quizito's new design language combines:
+- **Glassmorphism**: Frosted glass surfaces with blur effects
+- **Electric Vibrancy**: Bold neon accents and gradients  
+- **Minimalism**: Clean, spacious layouts with purposeful elements
+- **Premium Feel**: Sophisticated shadows and smooth animations
+
+## 🎨 New Color Palette
+
+### **Primary Brand Colors**
+```css
+/* Electric Blue - Primary brand color */
+--quizito-electric-blue: #00D4FF;
+--quizito-electric-blue-hover: #00B8E6;
+--quizito-electric-blue-light: #33DDFF;
+
+/* Neon Purple - Secondary accent */
+--quizito-neon-purple: #8B5CF6;
+--quizito-neon-purple-hover: #7C3AED;
+--quizito-neon-purple-light: #A78BFA;
+
+/* Cyber Green - Success/positive actions */
+--quizito-cyber-green: #00FF88;
+--quizito-cyber-green-hover: #00E670;
+
+/* Hot Pink - Error/destructive actions */
+--quizito-hot-pink: #FF006E;
+--quizito-hot-pink-hover: #E6005D;
+
+/* Electric Yellow - Warning/attention */
+--quizito-electric-yellow: #FFD60A;
+--quizito-electric-yellow-hover: #E6C109;
+```
+
+### **Surface & Background Colors**
+```css
+/* Dark Glass Surfaces */
+--quizito-bg-primary: #0A0A0F;           /* Deep space background */
+--quizito-bg-secondary: #12121A;         /* Section backgrounds */
+--quizito-glass-surface: rgba(255, 255, 255, 0.05);  /* Glass cards */
+--quizito-glass-surface-hover: rgba(255, 255, 255, 0.08);
+--quizito-glass-border: rgba(255, 255, 255, 0.1);
+--quizito-glass-border-hover: rgba(0, 212, 255, 0.3); /* Electric blue border */
+```
+
+### **Typography Colors**
+```css
+--quizito-text-primary: #FFFFFF;         /* Pure white for headings */
+--quizito-text-secondary: #B8BCC8;       /* Light gray for body text */
+--quizito-text-muted: #6B7280;           /* Muted for helper text */
+--quizito-text-accent: #00D4FF;          /* Electric blue for links/accents */
+```
+
+## 🧱 Typography System
+
+### **Font Stack & Hierarchy**
+```css
+/* Primary Font: Inter for clean, modern feel */
+font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+/* Typography Scale */
+--quizito-text-xs: 0.75rem;     /* 12px - Small labels */
+--quizito-text-sm: 0.875rem;    /* 14px - Body small */
+--quizito-text-base: 1rem;      /* 16px - Body text */
+--quizito-text-lg: 1.125rem;    /* 18px - Large body */
+--quizito-text-xl: 1.25rem;     /* 20px - Card titles */
+--quizito-text-2xl: 1.5rem;     /* 24px - Section titles */
+--quizito-text-3xl: 1.875rem;   /* 30px - Page titles */
+--quizito-text-4xl: 2.25rem;    /* 36px - Hero titles */
+--quizito-text-5xl: 3rem;       /* 48px - Large hero */
+```
+
+### **Typography Components**
+```tsx
+// Hero Title - Large gradient text with glow
+<HeroTitle className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-[var(--quizito-electric-blue)] via-[var(--quizito-neon-purple)] to-[var(--quizito-cyber-green)] bg-clip-text text-transparent">
+  Transform Content Into Quizzes
+</HeroTitle>
+
+// Section Title - Clean white text
+<SectionTitle className="text-3xl font-semibold text-[var(--quizito-text-primary)] mb-6">
+  Your Quizzes
+</SectionTitle>
+
+// Body Text - Light gray, good readability
+<BodyText className="text-base text-[var(--quizito-text-secondary)] leading-relaxed">
+  Create engaging quizzes from any content instantly.
+</BodyText>
+
+// Accent Text - Electric blue for emphasis
+<AccentText className="text-[var(--quizito-text-accent)] font-medium">
+  Learn More →
+</AccentText>
+```
+
+## 🔧 Component Design Standards
+
+### **Glass Cards**
+```tsx
+// Standard Glass Card
+<div className="
+  bg-[var(--quizito-glass-surface)] 
+  backdrop-blur-xl 
+  border border-[var(--quizito-glass-border)] 
+  rounded-2xl 
+  p-6 
+  shadow-2xl shadow-black/20
+  hover:bg-[var(--quizito-glass-surface-hover)] 
+  hover:border-[var(--quizito-glass-border-hover)]
+  transition-all duration-300
+">
+  Card Content
+</div>
+
+// Premium Glass Card (for important content)
+<div className="
+  bg-gradient-to-br from-[var(--quizito-glass-surface)] to-transparent
+  backdrop-blur-2xl 
+  border border-[var(--quizito-glass-border)]
+  rounded-3xl 
+  p-8 
+  shadow-[0_8px_32px_rgba(0,212,255,0.1)]
+  hover:shadow-[0_8px_32px_rgba(0,212,255,0.2)]
+  transition-all duration-500
+">
+  Premium Content
+</div>
+```
+
+### **Modern Buttons**
+```tsx
+// Primary Electric Button
+<button className="
+  bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)]
+  text-white font-semibold
+  px-8 py-4 rounded-2xl
+  shadow-[0_0_20px_rgba(0,212,255,0.4)]
+  hover:shadow-[0_0_30px_rgba(0,212,255,0.6)]
+  hover:scale-105
+  transition-all duration-300
+  border-0
+">
+  Create Quiz
+</button>
+
+// Glass Button (secondary)
+<button className="
+  bg-[var(--quizito-glass-surface)]
+  backdrop-blur-xl
+  border border-[var(--quizito-glass-border)]
+  text-[var(--quizito-text-primary)]
+  font-medium
+  px-6 py-3 rounded-xl
+  hover:bg-[var(--quizito-glass-surface-hover)]
+  hover:border-[var(--quizito-electric-blue)]/50
+  transition-all duration-300
+">
+  Learn More
+</button>
+
+// Neon Outline Button
+<button className="
+  bg-transparent
+  border-2 border-[var(--quizito-electric-blue)]
+  text-[var(--quizito-electric-blue)]
+  font-semibold
+  px-6 py-3 rounded-xl
+  hover:bg-[var(--quizito-electric-blue)]
+  hover:text-black
+  hover:shadow-[0_0_20px_rgba(0,212,255,0.5)]
+  transition-all duration-300
+">
+  Start Now
+</button>
+
+// Danger/Delete Button
+<button className="
+  bg-[var(--quizito-hot-pink)]
+  text-white font-medium
+  px-4 py-2 rounded-lg
+  hover:bg-[var(--quizito-hot-pink-hover)]
+  hover:shadow-[0_0_15px_rgba(255,0,110,0.4)]
+  transition-all duration-300
+">
+  Delete
+</button>
+```
+
+### **Form Elements**
+```tsx
+// Glass Input Field
+<input className="
+  bg-[var(--quizito-glass-surface)]
+  backdrop-blur-xl
+  border border-[var(--quizito-glass-border)]
+  text-[var(--quizito-text-primary)]
+  placeholder:text-[var(--quizito-text-muted)]
+  px-4 py-3 rounded-xl
+  focus:border-[var(--quizito-electric-blue)]
+  focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)]
+  focus:outline-none
+  transition-all duration-300
+  w-full
+">
+
+// Glass Textarea
+<textarea className="
+  bg-[var(--quizito-glass-surface)]
+  backdrop-blur-xl
+  border border-[var(--quizito-glass-border)]
+  text-[var(--quizito-text-primary)]
+  placeholder:text-[var(--quizito-text-muted)]
+  px-4 py-3 rounded-xl
+  focus:border-[var(--quizito-electric-blue)]
+  focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)]
+  focus:outline-none
+  transition-all duration-300
+  resize-none
+  min-h-[120px]
+">
+
+// Modern Select Dropdown
+<select className="
+  bg-[var(--quizito-glass-surface)]
+  backdrop-blur-xl
+  border border-[var(--quizito-glass-border)]
+  text-[var(--quizito-text-primary)]
+  px-4 py-3 rounded-xl
+  focus:border-[var(--quizito-electric-blue)]
+  focus:outline-none
+  transition-all duration-300
+  appearance-none
+  cursor-pointer
+">
+```
+
+## 🎭 Animation System
+
+### **Entrance Animations**
+```tsx
+// Page Load Animation
+const pageVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+  }
+};
+
+// Staggered List Animation
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+  }
+};
+
+// Card Hover Animation
+const cardHover = {
+  y: -8,
+  scale: 1.02,
+  transition: { duration: 0.3, ease: "easeOut" }
+};
+
+// Button Press Animation
+const buttonTap = {
+  scale: 0.95,
+  transition: { duration: 0.1 }
+};
+```
+
+### **Glow Effects**
+```tsx
+// Electric Glow on Hover
+.electric-glow:hover {
+  box-shadow: 
+    0 0 20px rgba(0, 212, 255, 0.4),
+    0 0 40px rgba(0, 212, 255, 0.2),
+    0 0 60px rgba(0, 212, 255, 0.1);
+}
+
+// Neon Text Glow
+.neon-text {
+  text-shadow: 
+    0 0 5px rgba(0, 212, 255, 0.5),
+    0 0 10px rgba(0, 212, 255, 0.3),
+    0 0 15px rgba(0, 212, 255, 0.2);
+}
+```
+
+## 🌟 Layout Patterns
+
+### **Page Structure**
+```tsx
+export default function ModernPage() {
+  return (
+    <div className="min-h-screen bg-[var(--quizito-bg-primary)]">
+      {/* Background gradient overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-[var(--quizito-bg-primary)] via-[var(--quizito-bg-secondary)] to-[var(--quizito-bg-primary)] -z-10" />
+      
+      {/* Floating particles/dots effect */}
+      <div className="fixed inset-0 opacity-30 -z-10">
+        {/* Animated background elements */}
+      </div>
+
+      {/* Main content */}
+      <motion.div
+        variants={pageVariants}
+        initial="hidden"
+        animate="visible"
+        className="relative z-10 container mx-auto px-6 py-12"
+      >
+        <HeroTitle>Your Page Title</HeroTitle>
+        <BodyText>Page description</BodyText>
+        
+        {/* Glass cards grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+          {/* Glass cards */}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+```
+
+### **Navigation Bar**
+```tsx
+<nav className="
+  sticky top-0 z-50
+  bg-[var(--quizito-glass-surface)]
+  backdrop-blur-2xl
+  border-b border-[var(--quizito-glass-border)]
+  px-6 py-4
+">
+  <div className="container mx-auto flex items-center justify-between">
+    {/* Logo with electric glow */}
+    <div className="text-2xl font-bold bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] bg-clip-text text-transparent">
+      Quizito
+    </div>
+    
+    {/* Navigation items */}
+    <div className="hidden md:flex items-center space-x-8">
+      <a className="text-[var(--quizito-text-secondary)] hover:text-[var(--quizito-electric-blue)] transition-colors">
+        Create
+      </a>
+      <a className="text-[var(--quizito-text-secondary)] hover:text-[var(--quizito-electric-blue)] transition-colors">
+        My Quizzes
+      </a>
+    </div>
+    
+    {/* CTA Button */}
+    <button className="electric-primary-button">
+      Get Started
+    </button>
+  </div>
+</nav>
+```
+
+## 📱 Responsive Design
+
+### **Breakpoints**
+- **Mobile**: < 768px (single column, larger touch targets)
+- **Tablet**: 768px - 1024px (two columns, medium spacing)
+- **Desktop**: > 1024px (three+ columns, full spacing)
+
+### **Mobile-First Patterns**
+```tsx
+// Responsive grid
+className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8"
+
+// Responsive text sizes
+className="text-2xl md:text-3xl lg:text-4xl"
+
+// Responsive padding
+className="p-4 md:p-6 lg:p-8"
+
+// Responsive glass effects (reduce blur on mobile for performance)
+className="backdrop-blur-sm md:backdrop-blur-xl"
+```
+
+## ✅ Implementation Rules
+
+### **ALWAYS Use:**
+1. **Glass surfaces** for all cards and containers
+2. **Electric blue** as primary accent color
+3. **Backdrop blur** effects for depth
+4. **Smooth animations** (300ms duration max)
+5. **Gradient text** for hero titles
+6. **Round corners** (12px-24px radius)
+7. **Consistent spacing** (multiples of 4px)
+
+### **NEVER Use:**
+1. Harsh solid colors for backgrounds
+2. Sharp corners or borders
+3. Heavy drop shadows (use glow effects instead)
+4. More than 3 accent colors in one view
+5. Animation durations longer than 500ms
+6. Pure black or pure white backgrounds
+
+### **Color Usage Guide:**
+- **Electric Blue**: Primary buttons, links, focus states
+- **Neon Purple**: Secondary accents, gradients
+- **Cyber Green**: Success states, positive feedback
+- **Hot Pink**: Errors, destructive actions, warnings
+- **Electric Yellow**: Attention, notifications, highlights
+
+## 🚀 Component Library Structure
+
+```
+components/
+├── ui/
+│   ├── glass-card.tsx         # Glass morphism cards
+│   ├── electric-button.tsx    # All button variants
+│   ├── glass-input.tsx        # Form inputs
+│   ├── neon-badge.tsx         # Status badges
+│   └── glow-effects.tsx       # Glow animations
+├── layout/
+│   ├── modern-navbar.tsx      # Glass navigation
+│   ├── glass-sidebar.tsx      # Sidebar navigation
+│   └── electric-footer.tsx    # Footer component
+└── effects/
+    ├── particle-background.tsx # Animated background
+    ├── floating-orbs.tsx      # Floating elements
+    └── aurora-gradient.tsx    # Dynamic gradients
+```
+
+This design system creates a **futuristic, premium, and instantly recognizable** interface that users will associate specifically with Quizito. The glassmorphism effects combined with electric accents create a modern, sophisticated feel while maintaining excellent usability and accessibility.

@@ -36,32 +36,26 @@ export function QuizList({ quizzes: initialQuizzes }: QuizListProps) {
 
   const handleDeleteQuiz = async (quizId: string) => {
     setIsDeleting(true);
-    
-    // Keep a copy of the original quizzes in case we need to revert
-    const originalQuizzes = [...quizzes];
-    
-    // Optimistically update the UI
-    setQuizzes(prev => prev.filter(q => q.id !== quizId));
-
+    toast.loading('Deleting quiz...');
     try {
-      const response = await fetch(`/api/quizzes/${quizId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete quiz.');
+        throw new Error(errorData.error || 'Failed to delete quiz');
       }
 
-      toast.success("Quiz deleted successfully!");
+      setQuizzes((prev) => prev.filter((quiz) => quiz.id !== quizId));
+      setIsDeleting(false);
+      toast.dismiss();
+      toast.success('Quiz deleted successfully!');
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error('An unexpected error occurred.');
-      }
-      // Revert the UI on failure
-      setQuizzes(originalQuizzes);
+      toast.dismiss();
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast.error(`Error: ${errorMessage}`);
     } finally {
       setIsDeleting(false);
     }

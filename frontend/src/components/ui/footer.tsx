@@ -26,14 +26,14 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="w-full border-t border-[#2A2A2A] bg-[#0D0D0D]">
+    <footer className="w-full border-t bg-card">
       <div className="container mx-auto px-4 py-12">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
           {/* Brand Section */}
-          <div className="lg:col-span-2 space-y-2">
-            <Link href="/" className="flex items-center">
-              <div className="relative h-24 w-24">
+          <div className="lg:col-span-2 space-y-4">
+            <Link href="/" className="flex items-center group">
+              <div className="relative h-24 w-24 transition-transform duration-200 group-hover:scale-105">
                 <Image
                   src="/logo.png"
                   alt="Quizito"
@@ -42,7 +42,7 @@ export const Footer = () => {
                 />
               </div>
             </Link>
-            <p className="text-[#A0A0A0] text-sm max-w-md">
+            <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
               Transform any content into engaging, AI-powered quizzes. Create, share, and compete with friends in seconds.
             </p>
             <div className="flex space-x-4">
@@ -50,7 +50,7 @@ export const Footer = () => {
                 href="https://github.com/Divy97"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#A0A0A0] hover:text-purple-400 transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors duration-200 p-2 rounded-md hover:bg-accent"
                 aria-label="Visit our GitHub"
               >
                 <Github className="h-5 w-5" />
@@ -59,14 +59,14 @@ export const Footer = () => {
                 href="https://twitter.com/ParekhDivy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#A0A0A0] hover:text-sky-400 transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors duration-200 p-2 rounded-md hover:bg-accent"
                 aria-label="Follow us on Twitter"
               >
                 <Twitter className="h-5 w-5" />
               </Link>
               <Link
                 href="mailto:support@quizito.com"
-                className="text-[#A0A0A0] hover:text-green-400 transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors duration-200 p-2 rounded-md hover:bg-accent"
                 aria-label="Send us an email"
               >
                 <Mail className="h-5 w-5" />
@@ -76,13 +76,13 @@ export const Footer = () => {
 
           {/* Product Links */}
           <div className="space-y-4">
-            <h3 className="text-[#E0E0E0] font-semibold">Product</h3>
-            <ul className="space-y-2">
+            <h3 className="text-foreground font-semibold text-lg">Product</h3>
+            <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-[#A0A0A0] text-sm hover:text-white transition-colors"
+                    className="text-muted-foreground text-sm hover:text-foreground transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -93,13 +93,13 @@ export const Footer = () => {
 
           {/* Support Links */}
           <div className="space-y-4">
-            <h3 className="text-[#E0E0E0] font-semibold">Support</h3>
-            <ul className="space-y-2">
+            <h3 className="text-foreground font-semibold text-lg">Support</h3>
+            <ul className="space-y-3">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-[#A0A0A0] text-sm hover:text-white transition-colors"
+                    className="text-muted-foreground text-sm hover:text-foreground transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -110,13 +110,13 @@ export const Footer = () => {
 
           {/* Legal Links */}
           <div className="space-y-4">
-            <h3 className="text-[#E0E0E0] font-semibold">Legal</h3>
-            <ul className="space-y-2">
+            <h3 className="text-foreground font-semibold text-lg">Legal</h3>
+            <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-[#A0A0A0] text-sm hover:text-white transition-colors"
+                    className="text-muted-foreground text-sm hover:text-foreground transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -127,12 +127,12 @@ export const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-[#2A2A2A] pt-8">
+        <div className="border-t pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-            <p className="text-[#A0A0A0] text-sm">
+            <p className="text-muted-foreground text-sm">
               © {currentYear} Quizito. All rights reserved.
             </p>
-            <p className="flex items-center text-[#A0A0A0] text-sm">
+            <p className="flex items-center text-muted-foreground text-sm">
               Made with{" "}
               <Heart className="h-4 w-4 mx-1 text-red-500" />
               for learning

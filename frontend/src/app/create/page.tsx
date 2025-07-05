@@ -1,57 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { AppLayout } from "@/components/ui/app-layout";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { useRouter } from "next/navigation";
-import { PageTitle, BodyText } from "@/components/ui/typography";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/context/UserContext';
+import { motion } from 'framer-motion';
 
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Link, Youtube, BrainCircuit, Sparkles, ArrowRight, Lock, AlertCircle } from "lucide-react";
+import { AppLayout } from '@/components/ui/app-layout';
+import { PageTitle, BodyText } from '@/components/ui/typography';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText } from 'lucide-react';
+import { Toaster } from '@/components/ui/sonner';
+import { toast } from 'sonner';
+import { LoginButton } from '@/components/ui/login-button';
 
 export default function CreatePage() {
-  const [session, setSession] = useState<null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isLoading } = useUser();
   const router = useRouter();
-
-  useEffect(() => {
-    const getSession = async () => {
-      setSession(null);
-      setLoading(false);
-    };
-    getSession();
-  }, []);
-
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState("topic");
   const [formData, setFormData] = useState({
-    title: "",
-    questionCount: "5",
-    description: "",
-    source: "",
-    isPublic: false
+    title: '',
+    description: '',
+    source_type: 'topic',
+    source_data: '',
+    difficulty: 'medium',
+    question_count: 5,
+    is_public: false,
   });
 
   const containerVariants = {
@@ -69,127 +48,111 @@ export default function CreatePage() {
     visible: { y: 0, opacity: 1 }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: string, value: string | boolean | number) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const isFormValid = () => {
-    return formData.title.trim() && formData.source.trim();
+    return formData.title.trim().length >= 5 && formData.source_data.trim().length >= 3;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid()) return;
-    
-    setIsGenerating(true);
+    if (!isFormValid() || !user) return;
+
+    setLoading(true);
     setError(null);
+    toast.loading('Generating your quiz... this may take a moment!');
 
     try {
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        source_type: selectedTab,
-        source_data: formData.source,
-        question_count: parseInt(formData.questionCount, 10),
-        is_public: formData.isPublic,
-        difficulty: 'medium', // Defaulting to medium for now
-      };
-
-      const response = await fetch('/api/quizzes/generate', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Sends the auth cookie
+        body: JSON.stringify(formData),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate quiz');
+        throw new Error(result.error?.message || result.error || 'Failed to generate quiz');
       }
 
-      const result = await response.json();
+      toast.dismiss();
+      toast.success('Quiz generated successfully!');
       router.push(`/quiz/${result.quizId}`);
 
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message || 'An unexpected error occurred. Please try again.');
-      } else {
-        setError('An unexpected error occurred. Please try again.');
-      }
+    } catch (error) {
+      toast.dismiss();
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      setError(errorMessage);
+      toast.error(`Error: ${errorMessage}`);
+      console.error('Quiz generation failed:', error);
     } finally {
-      setIsGenerating(false);
+      setLoading(false);
     }
   };
-
+  
   const getSourcePlaceholder = () => {
-    switch (selectedTab) {
-      case "topic":
-        return "E.g., 'Machine Learning Basics', 'Ancient Rome', 'React Hooks'";
-      case "youtube":
-        return "https://youtube.com/watch?v=dQw4w9WgXcQ";
-      case "url":
-        return "https://example.com/your-article";
-      default:
-        return "";
+    switch (formData.source_type) {
+      case 'topic': return 'e.g., "The History of Ancient Rome"';
+      case 'url': return 'https://example.com/article';
+      case 'youtube': return 'https://www.youtube.com/watch?v=...';
+      default: return '';
     }
   };
 
   const getSourceLabel = () => {
-    switch (selectedTab) {
-      case "topic":
-        return "What topic should your quiz cover?";
-      case "youtube":
-        return "Paste the YouTube video URL";
-      case "url":
-        return "Paste the article or blog URL";
-      default:
-        return "";
+    switch (formData.source_type) {
+      case 'topic': return 'Topic';
+      case 'url': return 'URL';
+      case 'youtube': return 'YouTube URL';
+      default: return 'Source';
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <AppLayout backgroundVariant="minimal">
+      <AppLayout>
         <div className="flex items-center justify-center min-h-[calc(100vh-120px)]">
-          <Sparkles className="h-8 w-8 animate-spin text-purple-500" />
+          <div className="text-center space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-[var(--quizito-electric-blue)] mx-auto" />
+            <BodyText>Loading...</BodyText>
+          </div>
         </div>
       </AppLayout>
-    )
+    );
   }
 
-  if (!session) {
+  if (!user) {
     return (
-      <AppLayout backgroundVariant="minimal">
-        <Dialog open={true} onOpenChange={() => router.push("/")}>
-          <DialogContent className="bg-[#1E1E1E] border-[#2A2A2A] text-white">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5 text-purple-400" />
-                Authentication Required
-              </DialogTitle>
-              <DialogDescription className="text-[#A0A0A0]">
-                You need to be logged in to create a quiz. Please sign in to continue.
-              </DialogDescription>
-            </DialogHeader>
-            <Button
-              onClick={() => router.push("/login")}
-              className="w-full bg-gradient-to-r from-[#6366F1] to-[#14B8A6] hover:from-[#5B5CF6] hover:to-[#10B981] text-white mt-4"
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center text-center p-4 min-h-[calc(100vh-120px)]">
+          <div className="max-w-md w-full space-y-8">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-6"
             >
-              Go to Login
-            </Button>
-          </DialogContent>
-        </Dialog>
-
-        {/* Blurred background content */}
-        <div className="relative overflow-hidden blur-sm pointer-events-none">
-          <div className="relative z-10 flex items-center justify-center px-4 py-6 min-h-[calc(100vh-120px)]">
-            <div className="text-center mb-6">
-              <PageTitle>
-                Create Your Quiz
-              </PageTitle>
-              <BodyText className="max-w-2xl mx-auto">
-                Transform any content into an engaging, AI-powered quiz in seconds
+              <div className="mx-auto bg-gradient-to-tr from-[var(--quizito-electric-blue)]/20 to-[var(--quizito-neon-purple)]/20 rounded-full p-4 w-fit">
+                <LogIn className="h-12 w-12 text-[var(--quizito-electric-blue)]" />
+              </div>
+              <PageTitle>Log In to Create Quizzes</PageTitle>
+              <BodyText>
+                You&apos;re just one step away from creating your own AI-powered quizzes.
+                Sign in to unlock this feature and many more.
               </BodyText>
-            </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <LoginButton />
+            </motion.div>
           </div>
         </div>
       </AppLayout>
@@ -197,189 +160,205 @@ export default function CreatePage() {
   }
 
   return (
-    <AppLayout backgroundVariant="default">
-      <div className="flex items-center justify-center px-4 py-6 min-h-[calc(100vh-120px)]">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="w-full max-w-4xl"
-        >
-          {/* Header */}
-          <motion.div variants={itemVariants} className="text-center mb-6">
-            <PageTitle>
-              Create Your Quiz
-            </PageTitle>
-            <BodyText className="max-w-2xl mx-auto">
-              Transform any content into an engaging, AI-powered quiz in seconds
-            </BodyText>
-          </motion.div>
+    <AppLayout>
+      <Toaster />
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="max-w-6xl mx-auto px-4 py-12"
+      >
+        <motion.div variants={itemVariants} className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="bg-gradient-to-tr from-[var(--quizito-electric-blue)]/20 to-[var(--quizito-neon-purple)]/20 rounded-full p-3">
+              <Sparkles className="h-8 w-8 text-[var(--quizito-electric-blue)]" />
+            </div>
+          </div>
+          <PageTitle>Create Your Next Quiz</PageTitle>
+          <BodyText className="max-w-2xl mx-auto">
+            Transform any content into an engaging, AI-powered quiz in seconds. 
+            Choose from topics, URLs, or YouTube videos to get started.
+          </BodyText>
+        </motion.div>
 
-          {/* Main Card */}
-          <motion.div variants={itemVariants}>
-            <Card className="bg-[#1E1E1E]/95 border-[#2A2A2A] shadow-2xl shadow-purple-500/5 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  {/* Error Message */}
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-3 p-3 rounded-md bg-red-500/10 border border-red-500/30 text-red-400"
-                    >
-                      <AlertCircle className="h-5 w-5" />
-                      <p className="text-sm">{error}</p>
-                    </motion.div>
-                  )}
-
-                  {/* Source Selection */}
-                  <motion.div variants={itemVariants} className="space-y-3">
-                    <Label className="text-[#E0E0E0] font-medium flex items-center gap-2">
-                      <span className="w-2 h-2 bg-gradient-to-r from-[#6366F1] to-[#14B8A6] rounded-full"></span>
-                      Choose Your Source
+        <form onSubmit={handleSubmit}>
+          <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content Area */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Quiz Details Card */}
+              <div className="space-y-6 bg-white/5 backdrop-blur-xl rounded-2xl p-6">
+                <div className="flex items-center gap-2 text-[var(--quizito-text-primary)]">
+                  <FileText className="h-5 w-5 text-[var(--quizito-electric-blue)]" />
+                  <h2 className="text-lg font-medium">Quiz Details</h2>
+                </div>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-[var(--quizito-text-primary)] font-medium">
+                      Quiz Title *
                     </Label>
-                    
-                    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-                      <TabsList className="grid w-full grid-cols-3 bg-[#2A2A2A]/50 border border-[#3A3A3A] backdrop-blur-sm">
-                        <TabsTrigger 
-                          value="topic" 
-                          className="text-[#A0A0A0] data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#6366F1] data-[state=active]:to-[#14B8A6] data-[state=active]:text-white transition-all"
-                        >
-                          <BrainCircuit className="mr-2 h-4 w-4" />
-                          Topic
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="youtube"
-                          className="text-[#A0A0A0] data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#6366F1] data-[state=active]:to-[#14B8A6] data-[state=active]:text-white transition-all"
-                        >
-                          <Youtube className="mr-2 h-4 w-4" />
-                          YouTube
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="url"
-                          className="text-[#A0A0A0] data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#6366F1] data-[state=active]:to-[#14B8A6] data-[state=active]:text-white transition-all"
-                        >
-                          <Link className="mr-2 h-4 w-4" />
-                          URL
-                        </TabsTrigger>
-                      </TabsList>
-                      
-                      <div className="mt-3">
-                        <Label className="text-sm text-[#A0A0A0] mb-2 block">
-                          {getSourceLabel()}
-                        </Label>
-                        {["topic", "youtube", "url"].map((tab) => (
-                          <TabsContent key={tab} value={tab} className="mt-0">
-                            <Input
-                              value={selectedTab === tab ? formData.source : ""}
-                              onChange={(e) => {
-                                if (selectedTab === tab) {
-                                  handleInputChange("source", e.target.value);
-                                }
-                              }}
-                              placeholder={selectedTab === tab ? getSourcePlaceholder() : ""}
-                              className="bg-[#2A2A2A]/50 border-[#3A3A3A] text-[#E0E0E0] placeholder:text-[#666] focus:border-[#6366F1]/50 focus:ring-[#6366F1]/20 transition-all"
-                            />
-                          </TabsContent>
-                        ))}
-                      </div>
-                    </Tabs>
-                  </motion.div>
-
-                  {/* Quiz Settings */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                    {/* Title */}
-                    <motion.div variants={itemVariants} className="md:col-span-2 space-y-2">
-                      <Label htmlFor="title" className="text-[#E0E0E0] font-medium text-sm">
-                        Quiz Title
-                      </Label>
-                      <Input 
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => handleInputChange("title", e.target.value)}
-                        placeholder="E.g., 'History of Rome'" 
-                        className="bg-[#2A2A2A]/50 border-[#3A3A3A] text-[#E0E0E0] placeholder:text-[#666] focus:border-[#6366F1]/50 focus:ring-[#6366F1]/20 transition-all"
-                      />
-                    </motion.div>
-                    
-                    {/* Question Count */}
-                    <motion.div variants={itemVariants} className="space-y-2">
-                      <Label htmlFor="question-count" className="text-[#E0E0E0] font-medium text-sm">
-                        Questions
-                      </Label>
-                      <Input
-                        id="question-count"
-                        type="number"
-                        value={formData.questionCount}
-                        onChange={(e) => handleInputChange("questionCount", e.target.value)}
-                        min="3"
-                        max="20"
-                        className="bg-[#2A2A2A]/50 border-[#3A3A3A] text-[#E0E0E0] focus:border-[#6366F1]/50 focus:ring-[#6366F1]/20 transition-all"
-                      />
-                    </motion.div>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => handleInputChange('title', e.target.value)}
+                      placeholder="e.g., 'The Ultimate Space Trivia'"
+                      className="bg-white/5 backdrop-blur-xl border-0 text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:ring-2 focus:ring-[var(--quizito-electric-blue)]/50 focus:outline-none transition-all duration-300"
+                    />
                   </div>
-
-                  {/* Public Toggle */}
-                  <motion.div variants={itemVariants}>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-[#2A2A2A]/50 border border-[#3A3A3A]">
-                      <div>
-                        <Label htmlFor="public-switch" className="flex items-center gap-2 font-medium text-[#E0E0E0]">
-                          <Lock className="h-4 w-4" />
-                          Make Quiz Public
-                        </Label>
-                        <p className="text-sm text-[#A0A0A0] mt-1">
-                          Public quizzes have a shareable link and a leaderboard. Private quizzes are only for you.
-                        </p>
-                      </div>
-                      <Switch
-                        id="public-switch"
-                        checked={formData.isPublic}
-                        onCheckedChange={(value) => handleInputChange('isPublic', value)}
-                        className="data-[state=checked]:bg-[#14B8A6] data-[state=unchecked]:bg-gray-600"
-                      />
-                    </div>
-                  </motion.div>
-
-                  {/* Description */}
-                  <motion.div variants={itemVariants} className="space-y-2">
-                    <Label htmlFor="description" className="text-[#E0E0E0] font-medium text-sm">
+                  <div className="space-y-2">
+                    <Label htmlFor="description" className="text-[var(--quizito-text-primary)] font-medium">
                       Description (Optional)
                     </Label>
                     <Textarea
                       id="description"
                       value={formData.description}
-                      onChange={(e) => handleInputChange("description", e.target.value)}
-                      placeholder="Add a brief description of your quiz..."
-                      className="bg-[#2A2A2A]/50 border-[#3A3A3A] text-[#E0E0E0] placeholder:text-[#666] focus:border-[#6366F1]/50 focus:ring-[#6366F1]/20 transition-all min-h-[100px]"
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                      placeholder="A brief summary of what this quiz is about."
+                      className="bg-white/5 backdrop-blur-xl border-0 text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:ring-2 focus:ring-[var(--quizito-electric-blue)]/50 focus:outline-none transition-all duration-300 resize-none min-h-[100px]"
                     />
-                  </motion.div>
+                  </div>
+                </div>
+              </div>
 
-                  {/* Submit Button */}
-                  <motion.div variants={itemVariants} className="flex justify-end pt-4">
-                    <Button
-                      type="submit"
-                      disabled={!isFormValid() || isGenerating}
-                      className="bg-gradient-to-r from-[#6366F1] to-[#14B8A6] hover:from-[#5B5CF6] hover:to-[#10B981] text-white px-8 py-3 text-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Sparkles className="mr-2 h-4 w-4 animate-spin" />
-                          Generating Quiz...
-                        </>
-                      ) : (
-                        <>
-                          Create Quiz
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </motion.div>
-                </form>
-              </CardContent>
-            </Card>
+              {/* Source Content Section */}
+              <div className="space-y-6 bg-white/5 backdrop-blur-xl rounded-2xl p-6">
+                <div className="flex items-center gap-2 text-[var(--quizito-text-primary)]">
+                  <Wand2 className="h-5 w-5 text-[var(--quizito-electric-blue)]" />
+                  <h2 className="text-lg font-medium">{getSourceLabel()}</h2>
+                </div>
+                <Tabs value={formData.source_type} onValueChange={(value) => handleInputChange("source_type", value)} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 bg-white/5 backdrop-blur-xl border-0 rounded-xl p-1">
+                    <TabsTrigger value="topic" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-black transition-all duration-300">
+                      <Wand2 className="h-4 w-4" />
+                      Topic
+                    </TabsTrigger>
+                    <TabsTrigger value="url" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-black transition-all duration-300">
+                      <Link className="h-4 w-4" />
+                      URL
+                    </TabsTrigger>
+                    <TabsTrigger value="youtube" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-black transition-all duration-300">
+                      <Youtube className="h-4 w-4" />
+                      YouTube
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="topic" className="mt-6">
+                    <Input
+                      value={formData.source_data}
+                      onChange={(e) => handleInputChange("source_data", e.target.value)}
+                      placeholder={getSourcePlaceholder()}
+                      className="bg-white/5 backdrop-blur-xl border-0 text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:ring-2 focus:ring-[var(--quizito-electric-blue)]/50 focus:outline-none transition-all duration-300"
+                    />
+                  </TabsContent>
+                  <TabsContent value="url" className="mt-6">
+                    <Input
+                      value={formData.source_data}
+                      onChange={(e) => handleInputChange("source_data", e.target.value)}
+                      placeholder={getSourcePlaceholder()}
+                      className="bg-white/5 backdrop-blur-xl border-0 text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:ring-2 focus:ring-[var(--quizito-electric-blue)]/50 focus:outline-none transition-all duration-300"
+                    />
+                  </TabsContent>
+                  <TabsContent value="youtube" className="mt-6">
+                    <Input
+                      value={formData.source_data}
+                      onChange={(e) => handleInputChange("source_data", e.target.value)}
+                      placeholder={getSourcePlaceholder()}
+                      className="bg-white/5 backdrop-blur-xl border-0 text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:ring-2 focus:ring-[var(--quizito-electric-blue)]/50 focus:outline-none transition-all duration-300"
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </div>
+
+            {/* Sidebar Configuration */}
+            <div className="space-y-8">
+              {/* Configuration Section */}
+              <div className="space-y-6 bg-white/5 backdrop-blur-xl rounded-2xl p-6">
+                <div className="flex items-center gap-2 text-[var(--quizito-text-primary)]">
+                  <Settings className="h-5 w-5 text-[var(--quizito-electric-blue)]" />
+                  <h2 className="text-lg font-medium">Configuration</h2>
+                </div>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="question-count" className="text-[var(--quizito-text-primary)] font-medium">
+                      Number of Questions
+                    </Label>
+                    <Input
+                      id="question-count"
+                      type="number"
+                      value={formData.question_count}
+                      onChange={(e) => handleInputChange('question_count', parseInt(e.target.value, 10))}
+                      min="3"
+                      max="10"
+                      className="bg-white/5 backdrop-blur-xl border-0 text-[var(--quizito-text-primary)] focus:ring-2 focus:ring-[var(--quizito-electric-blue)]/50 focus:outline-none transition-all duration-300"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-[var(--quizito-text-primary)] font-medium">Difficulty</Label>
+                    <Tabs value={formData.difficulty} onValueChange={(value) => handleInputChange("difficulty", value)} className="w-full">
+                      <TabsList className="grid w-full grid-cols-3 bg-white/5 backdrop-blur-xl border-0 rounded-xl p-1">
+                        <TabsTrigger value="easy" className="data-[state=active]:bg-[var(--quizito-cyber-green)] data-[state=active]:text-black transition-all duration-300">
+                          Easy
+                        </TabsTrigger>
+                        <TabsTrigger value="medium" className="data-[state=active]:bg-[var(--quizito-electric-yellow)] data-[state=active]:text-black transition-all duration-300">
+                          Medium
+                        </TabsTrigger>
+                        <TabsTrigger value="hard" className="data-[state=active]:bg-[var(--quizito-hot-pink)] data-[state=active]:text-black transition-all duration-300">
+                          Hard
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-xl rounded-xl">
+                    <Label htmlFor="public-switch" className="flex items-center gap-2 text-[var(--quizito-text-primary)] font-medium">
+                      <Globe className="h-4 w-4 text-[var(--quizito-electric-blue)]" />
+                      Make Public
+                    </Label>
+                    <Switch
+                      id="public-switch"
+                      checked={formData.is_public}
+                      onCheckedChange={(value) => handleInputChange('is_public', value)}
+                      className="data-[state=checked]:bg-[var(--quizito-cyber-green)] data-[state=unchecked]:bg-[var(--quizito-text-muted)]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Generate Button */}
+              <motion.div variants={itemVariants}>
+                <Button
+                  type="submit"
+                  disabled={!isFormValid() || loading}
+                  className="w-full bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white px-8 py-4 text-lg font-semibold rounded-2xl shadow-[0_0_20px_rgba(0,212,255,0.4)] hover:shadow-[0_0_30px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Generate Quiz
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+              
+              {/* Error Display */}
+              {error && (
+                <motion.div 
+                  variants={itemVariants}
+                  className="flex items-center gap-3 rounded-xl bg-[var(--quizito-hot-pink)]/10 p-4 text-sm text-[var(--quizito-hot-pink)]"
+                >
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </motion.div>
+              )}
+            </div>
           </motion.div>
-        </motion.div>
-      </div>
+        </form>
+      </motion.div>
     </AppLayout>
   );
 } 

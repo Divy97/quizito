@@ -20,7 +20,7 @@ export default function Home() {
 
   return (
     <PageBackground variant="hero">
-      <div className="flex flex-col min-h-screen text-[#E0E0E0] relative">
+      <div className="flex flex-col min-h-screen text-[var(--quizito-text-primary)] relative">
         {/* Cursor Glow Effect */}
         <div
           className="fixed w-96 h-96 pointer-events-none z-50"

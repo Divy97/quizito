@@ -1,19 +1,48 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser';
-import passport from './config/passport';
-import authRoutes from './routes/authRoutes';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import passport from 'passport';
 import pinoHttp from 'pino-http';
 import logger from './config/logger';
+import './config/passport';
+import authRoutes from './routes/authRoutes';
+import quizRoutes from './routes/quizRoutes';
 
 dotenv.config();
 
-const app: Express = express();
+const app = express();
 const port = process.env.PORT || 3001;
 
 // Middleware
-app.use(pinoHttp({ logger }));
+app.use(pinoHttp({ 
+  logger,
+  customLogLevel: function (req, res, err) {
+    if (res.statusCode >= 400 && res.statusCode < 500) {
+      return 'warn'
+    } else if (res.statusCode >= 500 || err) {
+      return 'error'
+    }
+    return 'info'
+  },
+  customSuccessMessage: function (req, res) {
+    return `${req.method} ${req.url} - ${res.statusCode}`
+  },
+  customErrorMessage: function (req, res, err) {
+    return `${req.method} ${req.url} - ${res.statusCode} - ${err.message}`
+  },
+  // Only log essential request/response data
+  serializers: {
+    req: (req) => ({
+      method: req.method,
+      url: req.url,
+      userAgent: req.headers['user-agent']
+    }),
+    res: (res) => ({
+      statusCode: res.statusCode
+    })
+  }
+}));
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
@@ -24,6 +53,7 @@ app.use(passport.initialize());
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/quizzes', quizRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Express + TypeScript Server');

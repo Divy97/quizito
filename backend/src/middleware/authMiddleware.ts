@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import pool from '../config/database';
 import dotenv from 'dotenv';
+import logger from '../config/logger';
 
 dotenv.config();
 
@@ -47,4 +48,34 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
   } catch (error) {
     res.status(403).json({ message: 'Invalid or expired token.' });
   }
+};
+
+/**
+ * A middleware that tries to authenticate a user but does not fail if authentication is not possible.
+ * If a valid JWT is present, it attaches the user to the request object (req.user).
+ * If no token is present or the token is invalid, it simply proceeds without a user object.
+ * This is useful for public endpoints that have optional authentication.
+ */
+
+export const softAuthenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return next(); // No token, proceed without a user
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [decoded.id]);
+
+    if (rows.length > 0) {
+      req.user = rows[0]; // Attach user if found
+    }
+  } catch (error) {
+    // Invalid token, but we don't fail the request.
+    // We just proceed without a user.
+    logger.warn({ error }, 'Invalid token encountered during soft authentication. Proceeding without user.');
+  }
+  
+  next();
 }; 
