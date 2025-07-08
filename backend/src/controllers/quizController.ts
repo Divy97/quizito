@@ -2,88 +2,54 @@ import { Request, Response } from 'express';
 import pool from '../config/database';
 import logger from '../config/logger';
 import { z } from 'zod';
-import { getQuizGenerationChain } from '../services/quizGenerationService';
-import { quizGenAPISchema, submitQuizAPISchema, OptionPayload } from '../types/quizSchemas';
+import { generateQuizFromSource } from '../services/quizGenerationService';
+import { quizGenAPISchema, submitQuizAPISchema } from '../types/quizSchemas';
+import { QuizPersistenceService } from '../services/quizPersistenceService';
 
 export const generateQuiz = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.id;
-  logger.info({ userId }, 'Quiz generation request received.');
-
-  const validation = quizGenAPISchema.safeParse(req.body);
-  if (!validation.success) {
-    logger.warn({ userId, errors: validation.error.flatten().fieldErrors }, 'Quiz generation validation failed.');
-    res.status(400).json({ error: validation.error.flatten().fieldErrors });
-    return;
-  }
-
-  const { source_type, source_data, difficulty, question_count, title, description, is_public } = validation.data;
-  
-  // FOR NOW, only supports the 'topic' source type.
-  if (source_type !== 'topic') {
-      logger.warn({ userId, source_type }, `Quiz generation failed: Unsupported source type.`);
-      res.status(501).json({ error: `${source_type} source type not yet implemented.` });
-      return;
-  }
-  
-  const client = await pool.connect();
+  logger.info({ userId }, 'Quiz generation process started.');
 
   try {
-    logger.info({ userId, topic: source_data }, 'Invoking quiz generation chain.');
-    const chain = await getQuizGenerationChain();
-    const questionsPayload = await chain.invoke({
-      topic: source_data,
-      difficulty,
-      question_count,
-    });
-    const { questions } = questionsPayload;
-
-    logger.info({ userId, quizTitle: title }, 'Starting database transaction to save quiz.');
-    await client.query('BEGIN');
-
-    // 1. Create the quiz
-    const quizInsertResult = await client.query(
-      `INSERT INTO quizzes (user_id, title, description, source_type, source_data, difficulty, question_count, is_public)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id`,
-      [userId, title, description, source_type, source_data, difficulty, question_count, is_public]
-    );
-    const quizId = quizInsertResult.rows[0].id;
-
-    // 2. Add questions and options
-    for (const question of questions) {
-      const questionInsertResult = await client.query(
-        `INSERT INTO questions (quiz_id, question, explanation)
-         VALUES ($1, $2, $3)
-         RETURNING id`,
-        [quizId, question.question, question.explanation]
-      );
-      const questionId = questionInsertResult.rows[0].id;
-
-      const optionsToInsert = question.options.map((opt: OptionPayload) => [questionId, opt.option_text, opt.is_correct]);
-      // loop through and insert one by one within the transaction.
-      for (const option of optionsToInsert) {
-          await client.query(
-            `INSERT INTO question_options (question_id, option_text, is_correct)
-             VALUES ($1, $2, $3)`,
-            option
-          );
-      }
+    const validation = quizGenAPISchema.safeParse(req.body);
+    if (!validation.success) {
+      logger.warn({ userId, errors: validation.error.flatten().fieldErrors }, 'Quiz generation validation failed.');
+      res.status(400).json({ error: validation.error.flatten().fieldErrors });
+      return;
     }
 
-    await client.query('COMMIT');
-    logger.info({ userId, quizId }, 'Quiz generated and saved successfully.');
+    const { source_data, difficulty, question_count, taxonomy_level, ...restOfQuizData } = validation.data;
+    
+    // FOR NOW, only supports the 'topic' source type.
+    if (validation.data.source_type !== 'topic') {
+        logger.warn({ userId, source_type: validation.data.source_type }, `Quiz generation failed: Unsupported source type.`);
+        res.status(501).json({ error: `${validation.data.source_type} source type not yet implemented.` });
+        return;
+    }
+    
+    // 1. Generate questions from the AI service
+    logger.info({ userId, topic: source_data, difficulty, taxonomy_level }, 'Invoking quiz generation service.');
+    const questionsPayload = await generateQuizFromSource(
+      difficulty,
+      question_count,
+      source_data,
+      taxonomy_level
+    );
+    
+    // 2. Persist the generated quiz to the database
+    const quizData = { user_id: userId, ...restOfQuizData, source_data, difficulty, question_count };
+    const quizId = await QuizPersistenceService.saveGeneratedQuiz(quizData, questionsPayload as any);
 
+    logger.info({ userId, quizId }, 'Quiz generation process completed successfully.');
     res.status(201).json({ quizId });
 
   } catch (error) {
-    await client.query('ROLLBACK');
     logger.error({ userId, error }, 'An error occurred during quiz generation.');
     if (error instanceof z.ZodError) {
       res.status(422).json({ error: 'Invalid payload from AI model.' });
+    } else {
+      res.status(500).json({ error: 'An unexpected error occurred.' });
     }
-    res.status(500).json({ error: 'An unexpected error occurred.' });
-  } finally {
-    client.release();
   }
 };
 
@@ -197,7 +163,7 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
     await client.query(
         `INSERT INTO quiz_attempts (quiz_id, user_id, nickname, score, time_taken_seconds)
          VALUES ($1, $2, $3, $4, $5)`,
-        [quizId, userId ?? null, finalNickname, finalScore, timeTaken]
+        [quizId, userId ?? null, finalNickname, Math.round(finalScore), Math.round(timeTaken)]
     );
     logger.info({ userId, quizId, score: finalScore }, 'Quiz attempt saved successfully.');
     
