@@ -4,12 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ClientQuestion } from '@/app/quiz/[quizId]/page';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { PageTitle, BodyText } from '@/components/ui/typography';
-import { AppLayout } from '../ui/app-layout';
-import { Check, X, RefreshCw, BarChart, User, Play, Trophy } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Check, X, RefreshCw, BarChart, User, Play, Trophy, Sparkles, Brain } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -109,7 +104,7 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Send auth cookie
+        credentials: 'include',
         body: JSON.stringify({
           quizId: quizData.id,
           answers: finalAnswers,
@@ -125,7 +120,7 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
       setQuizState('finished');
     } catch (error) {
       console.error(error);
-      setQuizState('playing'); // Revert on error
+      setQuizState('playing');
     }
   };
 
@@ -137,21 +132,57 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
     return <QuizResults quizData={quizData} results={results} nickname={nickname} />;
   }
 
+  if (quizState === 'submitting') {
+    return (
+      <>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-8 text-center">
+            <div className="animate-spin w-12 h-12 border-4 border-[var(--quizito-electric-blue)] border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-[var(--quizito-text-primary)] font-medium">
+              Calculating your results...
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   if (quizState !== 'playing' || !currentQuestion) {
     return null;
   }
 
   return (
-    <AppLayout>
-      <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-120px)]">
-        <Card className="w-full max-w-3xl bg-[#1E1E1E]/95 border-[#2A2A2A] shadow-2xl shadow-purple-500/10 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <PageTitle>{quizData.title}</PageTitle>
-            {quizData.description && <BodyText>{quizData.description}</BodyText>}
-            <Progress value={progress} className="w-full mt-4 bg-[#2A2A2A] [&>*]:bg-gradient-to-r [&>*]:from-[#6366F1] [&>*]:to-[#14B8A6]" />
-            <p className="text-sm text-gray-400 mt-2">Question {currentQuestionIndex + 1} of {totalQuestions}</p>
-          </CardHeader>
-          <CardContent>
+    <div className="flex flex-col items-center justify-center p-6 min-h-[calc(100vh-120px)] relative z-10">
+      {/* Progress Bar - Fixed at top */}
+      <div className="w-full max-w-4xl mb-6">
+          <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-4 shadow-xl shadow-[var(--quizito-electric-blue)]/5">
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-xl font-bold text-[var(--quizito-text-primary)]">
+                {quizData.title}
+              </h1>
+              <div className="text-sm text-[var(--quizito-text-muted)]">
+                Question {currentQuestionIndex + 1} of {totalQuestions}
+              </div>
+            </div>
+            <div className="w-full bg-[var(--quizito-glass-surface)] rounded-full h-2 border border-[var(--quizito-glass-border)]">
+              <motion.div
+                className="h-full bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-4xl bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10"
+        >
+
+          {/* Question Content */}
+          <div className="p-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentQuestion.id}
@@ -160,41 +191,60 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="space-y-6">
-                  <h2 className="text-xl font-semibold text-center text-gray-100">{currentQuestion.question}</h2>
+                <div className="space-y-8">
+                  <div className="text-center">
+                    <div className="inline-flex items-center gap-2 bg-[var(--quizito-electric-blue)]/10 text-[var(--quizito-electric-blue)] px-4 py-2 rounded-full font-medium mb-6">
+                      <Brain className="h-4 w-4" />
+                      Question {currentQuestionIndex + 1}
+                    </div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-[var(--quizito-text-primary)] leading-relaxed">
+                      {currentQuestion.question}
+                    </h2>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {currentQuestion.options.map((option) => {
                       const isSelected = selectedAnswers[currentQuestion.id] === option.id;
                       const isCorrect = currentQuestion.correctOptionId === option.id;
 
-                      let buttonClass = "border-[#3A3A3A] bg-[#2A2A2A]/50 hover:bg-[#3A3A3A]/70 text-[#E0E0E0] hover:text-white";
+                      let buttonClass = "bg-[var(--quizito-glass-surface)] border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] hover:border-[var(--quizito-electric-blue)]/50 hover:bg-[var(--quizito-glass-surface-hover)]";
+                      
                       if (answerStatus && isCorrect) {
-                        buttonClass = "bg-green-500/80 border-green-500 text-white";
+                        buttonClass = "bg-[var(--quizito-cyber-green)]/20 border-[var(--quizito-cyber-green)] text-[var(--quizito-cyber-green)] shadow-[0_0_20px_rgba(0,255,136,0.3)]";
                       } else if (answerStatus && isSelected && !isCorrect) {
-                        buttonClass = "bg-red-500/80 border-red-500 text-white";
+                        buttonClass = "bg-[var(--quizito-hot-pink)]/20 border-[var(--quizito-hot-pink)] text-[var(--quizito-hot-pink)] shadow-[0_0_20px_rgba(255,0,110,0.3)]";
                       } else if (answerStatus) {
                         buttonClass += " opacity-50";
                       }
 
                       return (
-                        <Button
+                        <motion.button
                           key={option.id}
                           onClick={() => handleOptionSelect(currentQuestion.id, option.id)}
                           disabled={!!answerStatus}
-                          className={`w-full h-auto py-4 text-left justify-start text-base whitespace-normal transition-all duration-200 ${buttonClass}`}
+                          whileHover={{ scale: answerStatus ? 1 : 1.02, y: answerStatus ? 0 : -2 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`w-full p-6 text-left text-lg backdrop-blur-xl rounded-2xl border transition-all duration-300 relative overflow-hidden ${buttonClass}`}
                         >
-                          {option.option_text}
-                        </Button>
+                          <div className="flex items-center gap-4">
+                            {answerStatus && isCorrect && (
+                              <Check className="h-6 w-6 text-[var(--quizito-cyber-green)] flex-shrink-0" />
+                            )}
+                            {answerStatus && isSelected && !isCorrect && (
+                              <X className="h-6 w-6 text-[var(--quizito-hot-pink)] flex-shrink-0" />
+                            )}
+                            <span className="leading-relaxed">{option.option_text}</span>
+                          </div>
+                        </motion.button>
                       );
                     })}
                   </div>
                 </div>
               </motion.div>
             </AnimatePresence>
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
       </div>
-    </AppLayout>
   );
 }
 
@@ -209,23 +259,27 @@ function NicknameDialog({ onStart, quizTitle }: { onStart: (nickname: string) =>
   };
 
   return (
-    <AppLayout>
-      <Dialog open={true}>
-        <DialogContent className="bg-[#1E1E1E] border-[#2A2A2A] text-white">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <User className="h-5 w-5 text-purple-400" />
-              Enter the Arena!
-            </DialogTitle>
-            <DialogDescription className="text-[#A0A0A0]">
-              You&apos;re about to take the public quiz: <span className="font-bold text-purple-300">{quizTitle}</span>.
-              <br />
-              Enter a nickname to appear on the leaderboard.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+    <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl p-8 shadow-2xl shadow-[var(--quizito-electric-blue)]/10"
+        >
+          <div className="text-center mb-8">
+            <div className="bg-gradient-to-r from-[var(--quizito-electric-blue)]/20 to-[var(--quizito-neon-purple)]/20 rounded-full p-4 w-fit mx-auto mb-6">
+              <User className="h-8 w-8 text-[var(--quizito-electric-blue)]" />
+            </div>
+            <h1 className="text-xl font-bold text-[var(--quizito-text-primary)] mb-3">
+              Ready for: <span className="text-[var(--quizito-electric-blue)]">{quizTitle}</span>
+            </h1>
+            <p className="text-[var(--quizito-text-secondary)] leading-relaxed">
+              Enter a nickname to appear on the leaderboard and start the quiz.
+            </p>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="nickname" className="text-sm font-medium text-[#E0E0E0]">
+              <Label htmlFor="nickname" className="text-[var(--quizito-text-primary)] font-semibold">
                 Your Nickname
               </Label>
               <Input
@@ -233,22 +287,21 @@ function NicknameDialog({ onStart, quizTitle }: { onStart: (nickname: string) =>
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="E.g., Captain Quiz"
-                className="mt-2 bg-[#2A2A2A]/50 border-[#3A3A3A] text-white"
+                className="mt-2 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12"
                 required
                 maxLength={30}
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#6366F1] to-[#14B8A6] hover:from-[#5B5CF6] hover:to-[#10B981] text-white"
+              className="w-full bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-8 py-4 rounded-xl shadow-[0_0_20px_rgba(0,212,255,0.4)] hover:shadow-[0_0_30px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300"
             >
-              <Play className="mr-2 h-4 w-4" />
+              <Play className="mr-2 h-5 w-5" />
               Start Quiz
             </Button>
           </form>
-        </DialogContent>
-      </Dialog>
-    </AppLayout>
+        </motion.div>
+      </div>
   );
 }
 
@@ -265,108 +318,169 @@ function QuizResults({
   const isPublicQuiz = quizData.is_public;
 
   return (
-      <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-120px)]">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="w-full max-w-4xl space-y-8">
+    <div className="flex flex-col items-center justify-center p-6 min-h-[calc(100vh-120px)] relative z-10">
+      <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }} 
+          animate={{ opacity: 1, scale: 1 }} 
+          transition={{ duration: 0.5 }} 
+          className="w-full max-w-5xl space-y-8"
+        >
+          {/* Score Header */}
+          <div className="w-full max-w-4xl mb-8 text-center">
+            <motion.div 
+              initial={{ scale: 0 }} 
+              animate={{ scale: 1 }} 
+              transition={{ delay: 0.2, type: 'spring' }}
+              className="mb-6"
+            >
+              <div className={`w-32 h-32 mx-auto rounded-full flex items-center justify-center text-5xl font-bold text-white relative ${results.score >= 70 ? 'bg-gradient-to-r from-[var(--quizito-cyber-green)] to-[var(--quizito-electric-blue)]' : 'bg-gradient-to-r from-[var(--quizito-hot-pink)] to-[var(--quizito-electric-yellow)]'} shadow-2xl shadow-[var(--quizito-electric-blue)]/20`}>
+                {Math.round(results.score)}%
+                {results.score >= 70 && (
+                  <div className="absolute -top-3 -right-3">
+                    <Trophy className="h-10 w-10 text-[var(--quizito-electric-yellow)]" />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+            <h1 className="text-4xl md:text-5xl font-bold text-[var(--quizito-text-primary)] mb-4">
+              Quiz Complete!
+            </h1>
+            <p className="text-xl text-[var(--quizito-text-secondary)]">
+              You answered <span className="text-[var(--quizito-electric-blue)] font-bold">{results.correctAnswers}</span> out of <span className="font-bold">{results.totalQuestions}</span> questions correctly.
+            </p>
+          </div>
+
           {/* Results Card */}
-          <Card className="w-full bg-[#1E1E1E]/95 border-[#2A2A2A] shadow-2xl shadow-purple-500/10 backdrop-blur-sm">
-            <CardHeader className="text-center items-center">
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1, transition: { delay: 0.2, type: 'spring' } }}>
-                <div className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white ${results.score >= 70 ? 'bg-green-500' : 'bg-red-500'}`}>
-                  {Math.round(results.score)}%
-                </div>
-              </motion.div>
-              <PageTitle>Quiz Complete!</PageTitle>
-              <BodyText>You answered {results.correctAnswers} out of {results.totalQuestions} questions correctly.</BodyText>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+          <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10">
+            
+            <div className="p-8">
+              <h3 className="text-2xl font-bold text-[var(--quizito-text-primary)] mb-6 flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-[var(--quizito-electric-blue)]" />
+                Detailed Results
+              </h3>
+              <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-2">
                 {quizData.questions.map((question, index) => {
                   const result = results.results.find(r => r.questionId === question.id);
                   if (!result) return null;
                   
                   return (
-                    <div key={question.id} className="p-4 rounded-lg bg-[#2A2A2A]/50 border border-[#3A3A3A]">
-                      <h3 className="font-semibold text-gray-100 mb-2">Question {index + 1}: {question.question}</h3>
-                      <div className="space-y-2">
+                    <div key={question.id} className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-6">
+                      <h4 className="font-semibold text-[var(--quizito-text-primary)] mb-4 text-lg">
+                        Question {index + 1}: {question.question}
+                      </h4>
+                      <div className="space-y-3">
                         {question.options.map(option => {
                           const isSelected = result.selectedOptionId === option.id;
                           const isCorrect = result.correctOptionId === option.id;
                           
-                          let bgClass = 'bg-transparent';
-                          if (isSelected && !isCorrect) bgClass = 'bg-red-500/30';
-                          if (isCorrect) bgClass = 'bg-green-500/30';
+                          let bgClass = 'bg-[var(--quizito-glass-surface)] border-[var(--quizito-glass-border)]';
+                          if (isSelected && !isCorrect) bgClass = 'bg-[var(--quizito-hot-pink)]/20 border-[var(--quizito-hot-pink)]';
+                          if (isCorrect) bgClass = 'bg-[var(--quizito-cyber-green)]/20 border-[var(--quizito-cyber-green)]';
 
                           return (
-                            <div key={option.id} className={`flex items-center gap-3 p-2 rounded-md text-sm ${bgClass}`}>
-                              {isCorrect ? <Check className="h-4 w-4 text-green-400" /> : (isSelected ? <X className="h-4 w-4 text-red-400" /> : <div className="w-4 h-4" />)}
-                              <span className={isCorrect ? 'text-green-300' : (isSelected ? 'text-red-300' : 'text-gray-300')}>{option.option_text}</span>
+                            <div key={option.id} className={`flex items-center gap-3 p-4 rounded-xl border backdrop-blur-xl ${bgClass}`}>
+                              {isCorrect ? (
+                                <Check className="h-5 w-5 text-[var(--quizito-cyber-green)] flex-shrink-0" />
+                              ) : isSelected ? (
+                                <X className="h-5 w-5 text-[var(--quizito-hot-pink)] flex-shrink-0" />
+                              ) : (
+                                <div className="w-5 h-5 flex-shrink-0" />
+                              )}
+                              <span className={`${isCorrect ? 'text-[var(--quizito-cyber-green)]' : isSelected ? 'text-[var(--quizito-hot-pink)]' : 'text-[var(--quizito-text-secondary)]'} leading-relaxed`}>
+                                {option.option_text}
+                              </span>
                             </div>
                           );
                         })}
                       </div>
-                      {!result.isCorrect && (
-                        <div className="mt-3 p-3 rounded-md bg-[#121212] border border-[#2A2A2A] text-sm text-gray-400">
-                          <p><span className="font-bold text-gray-200">Explanation:</span> {result.explanation}</p>
+                      {!result.isCorrect && result.explanation && (
+                        <div className="mt-4 p-4 rounded-xl bg-[var(--quizito-glass-surface)] border border-[var(--quizito-glass-border)]">
+                          <p className="text-[var(--quizito-text-secondary)]">
+                            <span className="font-bold text-[var(--quizito-text-primary)]">Explanation:</span> {result.explanation}
+                          </p>
                         </div>
                       )}
                     </div>
                   );
                 })}
               </div>
-              <div className="flex justify-center gap-4 mt-6">
-                <Button variant="outline" onClick={() => window.location.reload()}>
-                  <RefreshCw className="mr-2 h-4 w-4" /> Retake Quiz
+              
+              <div className="flex flex-col md:flex-row justify-center gap-4 mt-8">
+                <Button 
+                  onClick={() => window.location.reload()}
+                  className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] hover:border-[var(--quizito-electric-blue)]/50 hover:bg-[var(--quizito-glass-surface-hover)]"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" /> 
+                  Retake Quiz
                 </Button>
-                <Button onClick={() => router.push('/my-quizzes')}>
-                  <BarChart className="mr-2 h-4 w-4" /> View My Quizzes
+                <Button 
+                  onClick={() => router.push('/my-quizzes')}
+                  className="bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-6 py-3 rounded-xl shadow-[0_0_20px_rgba(0,212,255,0.4)] hover:shadow-[0_0_30px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300"
+                >
+                  <BarChart className="mr-2 h-4 w-4" /> 
+                  View My Quizzes
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
           
           {/* Leaderboard Card */}
           {isPublicQuiz && (
-            <Card className="bg-[#1E1E1E]/95 border-[#2A2A2A] shadow-lg">
-              <CardHeader>
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-yellow-400" />
+            <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/5">
+              <div className="p-8 border-b border-[var(--quizito-glass-border)]">
+                <h2 className="text-2xl font-bold text-[var(--quizito-text-primary)] flex items-center gap-3">
+                  <Trophy className="h-6 w-6 text-[var(--quizito-electric-yellow)]" />
                   Leaderboard
                 </h2>
-              </CardHeader>
-              <CardContent>
+                <p className="text-[var(--quizito-text-secondary)] mt-2">
+                  See how you rank against other players
+                </p>
+              </div>
+              <div className="p-8">
                 {results.leaderboard.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-b-[#3A3A3A]">
-                        <TableHead className="w-[60px] text-center">Rank</TableHead>
-                        <TableHead>Nickname</TableHead>
-                        <TableHead className="text-right">Score</TableHead>
-                        <TableHead className="text-right">Time</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {results.leaderboard.map((entry, index) => {
-                        const isCurrentUser = entry.nickname === nickname;
-                        return (
-                          <TableRow key={index} className={`border-b-0 ${isCurrentUser ? 'bg-purple-500/10' : ''}`}>
-                            <TableCell className="text-center font-bold text-lg">
-                              {index === 0 ? '🏆' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-                            </TableCell>
-                            <TableCell className={`font-medium ${isCurrentUser ? 'text-purple-300' : 'text-gray-200'}`}>{entry.nickname}</TableCell>
-                            <TableCell className="text-right font-semibold text-green-400">{Math.round(entry.score)}%</TableCell>
-                            <TableCell className="text-right text-gray-400">{entry.time_taken_seconds}s</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b border-[var(--quizito-glass-border)]">
+                          <TableHead className="w-[60px] text-center text-[var(--quizito-text-primary)]">Rank</TableHead>
+                          <TableHead className="text-[var(--quizito-text-primary)]">Nickname</TableHead>
+                          <TableHead className="text-right text-[var(--quizito-text-primary)]">Score</TableHead>
+                          <TableHead className="text-right text-[var(--quizito-text-primary)]">Time</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {results.leaderboard.map((entry, index) => {
+                          const isCurrentUser = entry.nickname === nickname;
+                          return (
+                            <TableRow key={index} className={`border-b-0 ${isCurrentUser ? 'bg-[var(--quizito-electric-blue)]/10' : ''}`}>
+                              <TableCell className="text-center font-bold text-lg">
+                                {index === 0 ? '🏆' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                              </TableCell>
+                              <TableCell className={`font-medium ${isCurrentUser ? 'text-[var(--quizito-electric-blue)]' : 'text-[var(--quizito-text-primary)]'}`}>
+                                {entry.nickname}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold text-[var(--quizito-cyber-green)]">
+                                {Math.round(entry.score)}%
+                              </TableCell>
+                              <TableCell className="text-right text-[var(--quizito-text-muted)]">
+                                {entry.time_taken_seconds}s
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 ) : (
-                  <div className="text-center text-gray-400 py-8">
-                    <p>You&apos;re the first to take this quiz! Your score is at the top of the leaderboard.</p>
+                  <div className="text-center py-8">
+                    <Trophy className="h-12 w-12 text-[var(--quizito-electric-blue)] mx-auto mb-4" />
+                    <p className="text-[var(--quizito-text-secondary)]">
+                      You&apos;re the first to take this quiz! Your score is at the top of the leaderboard.
+                    </p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </motion.div>
       </div>

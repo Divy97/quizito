@@ -46,9 +46,41 @@
 :root {
   --radius: 0.5rem;
   
-  /* 🎨 Simple, Modern, Vibrant Design System */
+  /* 🎨 Quizito Electric Design System */
   
-  /* Primary Brand Colors - Vibrant & Clean */
+  /* Electric Brand Colors */
+  --quizito-electric-blue: #00D4FF;
+  --quizito-electric-blue-hover: #00B8E6;
+  --quizito-electric-blue-light: #33DDFF;
+  
+  --quizito-neon-purple: #8B5CF6;
+  --quizito-neon-purple-hover: #7C3AED;
+  --quizito-neon-purple-light: #A78BFA;
+  
+  --quizito-cyber-green: #00FF88;
+  --quizito-cyber-green-hover: #00E670;
+  
+  --quizito-hot-pink: #FF006E;
+  --quizito-hot-pink-hover: #E6005D;
+  
+  --quizito-electric-yellow: #FFD60A;
+  --quizito-electric-yellow-hover: #E6C109;
+  
+  /* Glass Surface Colors */
+  --quizito-bg-primary: #0A0A0F;
+  --quizito-bg-secondary: #12121A;
+  --quizito-glass-surface: rgba(255, 255, 255, 0.05);
+  --quizito-glass-surface-hover: rgba(255, 255, 255, 0.08);
+  --quizito-glass-border: rgba(255, 255, 255, 0.1);
+  --quizito-glass-border-hover: rgba(0, 212, 255, 0.3);
+  
+  /* Typography Colors */
+  --quizito-text-primary: #FFFFFF;
+  --quizito-text-secondary: #B8BCC8;
+  --quizito-text-muted: #6B7280;
+  --quizito-text-accent: #00D4FF;
+  
+  /* Legacy Colors for compatibility */
   --primary-blue: #2563eb;
   --primary-blue-hover: #1d4ed8;
   --primary-purple: #7c3aed;
@@ -119,41 +151,41 @@
 }
 
 .dark {
-  /* Darker Blue-Gray Theme */
-  --background: var(--dark-bg-primary);
-  --foreground: var(--text-inverse);
-  --card: var(--dark-bg-secondary);
-  --card-foreground: var(--text-inverse);
-  --popover: var(--dark-bg-secondary);
-  --popover-foreground: var(--text-inverse);
-  --primary: var(--primary-blue);
-  --primary-foreground: var(--text-inverse);
-  --secondary: var(--dark-bg-secondary);
-  --secondary-foreground: var(--text-inverse);
-  --muted: var(--dark-bg-muted);
-  --muted-foreground: #94a3b8;
-  --accent: var(--dark-bg-accent);
-  --accent-foreground: var(--text-inverse);
-  --destructive: var(--error);
-  --destructive-foreground: var(--text-inverse);
-  --border: var(--dark-bg-muted);
-  --input: var(--dark-bg-secondary);
-  --ring: var(--primary-blue);
-  --chart-1: var(--primary-blue);
-  --chart-2: var(--primary-purple);
-  --chart-3: var(--primary-green);
-  --chart-4: var(--accent-orange);
-  --chart-5: var(--accent-pink);
+  /* Quizito Electric Dark Theme */
+  --background: var(--quizito-bg-primary);
+  --foreground: var(--quizito-text-primary);
+  --card: var(--quizito-glass-surface);
+  --card-foreground: var(--quizito-text-primary);
+  --popover: var(--quizito-glass-surface);
+  --popover-foreground: var(--quizito-text-primary);
+  --primary: var(--quizito-electric-blue);
+  --primary-foreground: var(--quizito-text-primary);
+  --secondary: var(--quizito-glass-surface);
+  --secondary-foreground: var(--quizito-text-primary);
+  --muted: var(--quizito-glass-surface);
+  --muted-foreground: var(--quizito-text-muted);
+  --accent: var(--quizito-glass-surface-hover);
+  --accent-foreground: var(--quizito-text-primary);
+  --destructive: var(--quizito-hot-pink);
+  --destructive-foreground: var(--quizito-text-primary);
+  --border: var(--quizito-glass-border);
+  --input: var(--quizito-glass-surface);
+  --ring: var(--quizito-electric-blue);
+  --chart-1: var(--quizito-electric-blue);
+  --chart-2: var(--quizito-neon-purple);
+  --chart-3: var(--quizito-cyber-green);
+  --chart-4: var(--quizito-electric-yellow);
+  --chart-5: var(--quizito-hot-pink);
   
   /* Sidebar */
-  --sidebar: var(--dark-bg-secondary);
-  --sidebar-foreground: var(--text-inverse);
-  --sidebar-primary: var(--primary-blue);
-  --sidebar-primary-foreground: var(--text-inverse);
-  --sidebar-accent: var(--dark-bg-muted);
-  --sidebar-accent-foreground: var(--text-inverse);
-  --sidebar-border: var(--dark-bg-muted);
-  --sidebar-ring: var(--primary-blue);
+  --sidebar: var(--quizito-glass-surface);
+  --sidebar-foreground: var(--quizito-text-primary);
+  --sidebar-primary: var(--quizito-electric-blue);
+  --sidebar-primary-foreground: var(--quizito-text-primary);
+  --sidebar-accent: var(--quizito-glass-surface-hover);
+  --sidebar-accent-foreground: var(--quizito-text-primary);
+  --sidebar-border: var(--quizito-glass-border);
+  --sidebar-ring: var(--quizito-electric-blue);
 }
 
 @layer base {
@@ -185,8 +217,58 @@
   }
 }
 
-/* 🎨 Simple Modern Utilities */
+/* 🎨 Quizito Electric Utilities */
 @layer utilities {
+  /* Glass Effects */
+  .glass-card {
+    background: var(--quizito-glass-surface);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--quizito-glass-border);
+    border-radius: 1.5rem;
+  }
+  
+  .glass-card-hover {
+    transition: all 0.3s ease;
+  }
+  
+  .glass-card-hover:hover {
+    background: var(--quizito-glass-surface-hover);
+    border-color: var(--quizito-glass-border-hover);
+  }
+  
+  /* Electric Glow Effects */
+  .electric-glow {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+  }
+  
+  .electric-glow:hover {
+    box-shadow: 
+      0 0 20px rgba(0, 212, 255, 0.4),
+      0 0 40px rgba(0, 212, 255, 0.2),
+      0 0 60px rgba(0, 212, 255, 0.1);
+  }
+  
+  .neon-text {
+    text-shadow: 
+      0 0 5px rgba(0, 212, 255, 0.5),
+      0 0 10px rgba(0, 212, 255, 0.3),
+      0 0 15px rgba(0, 212, 255, 0.2);
+  }
+  
+  /* Electric Gradients */
+  .gradient-electric {
+    background: linear-gradient(135deg, var(--quizito-electric-blue), var(--quizito-neon-purple));
+  }
+  
+  .gradient-cyber {
+    background: linear-gradient(135deg, var(--quizito-cyber-green), var(--quizito-electric-yellow));
+  }
+  
+  .gradient-neon {
+    background: linear-gradient(135deg, var(--quizito-neon-purple), var(--quizito-hot-pink));
+  }
+  
+  /* Legacy Utilities for compatibility */
   .card-shadow {
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   }

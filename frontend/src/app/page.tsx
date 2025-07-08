@@ -1,10 +1,12 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { PageBackground } from '@/components/ui/page-background';
-import { HeroSection } from '@/components/landing/HeroSection';
-import { StepsSection } from '@/components/landing/StepsSection';
-import { InputTypesSection } from '@/components/landing/InputTypesSection';
-import { CTASection } from '@/components/landing/CTASection';
+import { NewHeroSection } from '@/components/landing/NewHeroSection';
+import { ProblemSolutionSection } from '@/components/landing/ProblemSolutionSection';
+import { WhyDifferentSection } from '@/components/landing/WhyDifferentSection';
+import { SocialProofSection } from '@/components/landing/SocialProofSection';
+import { UseCaseSection } from '@/components/landing/UseCaseSection';
+import { FinalCTASection } from '@/components/landing/FinalCTASection';
 import { Footer } from '@/components/landing/Footer';
 
 export default function Home() {
@@ -27,16 +29,18 @@ export default function Home() {
           style={{
             left: mousePosition.x - 192,
             top: mousePosition.y - 192,
-            background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)',
           }}
           aria-hidden="true"
         />
 
         <main className="flex-1 relative z-10">
-          <HeroSection />
-          <StepsSection />
-          <InputTypesSection />
-          <CTASection />
+          <NewHeroSection />
+          <ProblemSolutionSection />
+          <WhyDifferentSection />
+          <SocialProofSection />
+          <UseCaseSection />
+          <FinalCTASection />
         </main>
 
         <Footer />

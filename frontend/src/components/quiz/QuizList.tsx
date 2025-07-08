@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { MyQuiz } from '@/app/my-quizzes/page';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FileText, Play, Trash2, HelpCircle, ChevronsUpDown, BarChart2 } from 'lucide-react';
+import { FileText, Play, Trash2, HelpCircle, ChevronsUpDown, BarChart2, Zap } from 'lucide-react';
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -64,11 +63,18 @@ export function QuizList({ quizzes: initialQuizzes }: QuizListProps) {
   if (quizzes.length === 0) {
     return (
       <div className="text-center py-16">
-        <FileText className="h-16 w-16 text-purple-400 mx-auto mb-4" />
-        <h2 className="text-2xl font-semibold text-white mb-2">No Quizzes Yet</h2>
-        <p className="text-gray-400 mb-6">You haven&apos;t created any quizzes. Let&apos;s change that!</p>
-        <Button asChild>
-          <Link href="/create">Create Your First Quiz</Link>
+        <div className="bg-gradient-to-r from-[var(--quizito-electric-blue)]/20 to-[var(--quizito-neon-purple)]/20 rounded-full p-6 w-fit mx-auto mb-6">
+          <FileText className="h-16 w-16 text-[var(--quizito-electric-blue)] mx-auto" />
+        </div>
+        <h2 className="text-3xl font-bold text-[var(--quizito-text-primary)] mb-4">No Quizzes Yet</h2>
+        <p className="text-[var(--quizito-text-secondary)] text-lg mb-8 leading-relaxed">
+          You haven&apos;t created any quizzes. Let&apos;s change that!
+        </p>
+        <Button asChild className="bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-8 py-4 rounded-xl shadow-[0_0_20px_rgba(0,212,255,0.4)] hover:shadow-[0_0_30px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300">
+          <Link href="/create">
+            <Zap className="mr-2 h-5 w-5" />
+            Create Your First Quiz
+          </Link>
         </Button>
       </div>
     );
@@ -82,78 +88,111 @@ export function QuizList({ quizzes: initialQuizzes }: QuizListProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
+          whileHover={{ y: -5 }}
         >
-          <Card className="h-full flex flex-col bg-[#1E1E1E]/90 border-[#2A2A2A] hover:border-purple-500/50 transition-colors duration-300">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold text-gray-100">{quiz.title}</CardTitle>
-              <CardDescription className="text-sm text-gray-400">
+          <div className="h-full flex flex-col bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl shadow-xl shadow-[var(--quizito-electric-blue)]/5 hover:shadow-[var(--quizito-electric-blue)]/10 hover:border-[var(--quizito-electric-blue)]/50 transition-all duration-300">
+            {/* Card Header */}
+            <div className="p-6 border-b border-[var(--quizito-glass-border)]">
+              <h3 className="text-xl font-bold text-[var(--quizito-text-primary)] mb-2 line-clamp-2">
+                {quiz.title}
+              </h3>
+              <p className="text-sm text-[var(--quizito-text-muted)]">
                 Created {formatDistanceToNow(new Date(quiz.created_at!), { addSuffix: true })}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="flex items-center text-sm text-gray-300">
-                <HelpCircle className="h-4 w-4 mr-2 text-purple-400" />
-                {quiz.question_count} Questions
-              </div>
-            </CardContent>
+              </p>
+            </div>
 
-            <div className="px-6 pb-4">
+            {/* Card Content */}
+            <div className="p-6 flex-grow">
+              <div className="flex items-center gap-2 text-[var(--quizito-text-secondary)] mb-4">
+                <HelpCircle className="h-4 w-4 text-[var(--quizito-electric-blue)]" />
+                <span className="font-medium">{quiz.question_count} Questions</span>
+              </div>
+
+              {/* Quiz Attempts */}
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-start text-gray-400 hover:text-white">
-                    <BarChart2 className="h-4 w-4 mr-2" />
-                    View Attempts ({quiz.quiz_attempts.length})
-                    <ChevronsUpDown className="h-4 w-4 ml-auto" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full justify-between text-[var(--quizito-text-secondary)] hover:text-[var(--quizito-electric-blue)] hover:bg-[var(--quizito-electric-blue)]/10 transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-2">
+                      <BarChart2 className="h-4 w-4" />
+                      <span>Attempts ({quiz.quiz_attempts.length})</span>
+                    </div>
+                    <ChevronsUpDown className="h-4 w-4" />
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="py-2 space-y-2">
+                <CollapsibleContent className="mt-3 space-y-2">
                   {quiz.quiz_attempts.length > 0 ? (
                     quiz.quiz_attempts.map((attempt) => (
-                      <div key={attempt.id} className="flex justify-between items-center text-sm p-2 rounded-md bg-[#2A2A2A]/50">
-                        <span className="font-semibold text-white">{attempt.score}%</span>
-                        <span className="text-gray-400">
+                      <div 
+                        key={attempt.id} 
+                        className="flex justify-between items-center p-3 rounded-xl bg-[var(--quizito-glass-surface)] border border-[var(--quizito-glass-border)]"
+                      >
+                        <span className="font-semibold text-[var(--quizito-cyber-green)]">
+                          {attempt.score}%
+                        </span>
+                        <span className="text-[var(--quizito-text-muted)] text-sm">
                           {formatDistanceToNow(new Date(attempt.submitted_at!), { addSuffix: true })}
                         </span>
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-sm text-gray-500 py-2">No attempts yet.</p>
+                    <div className="text-center py-4">
+                      <p className="text-[var(--quizito-text-muted)] text-sm">
+                        No attempts yet
+                      </p>
+                    </div>
                   )}
                 </CollapsibleContent>
               </Collapsible>
             </div>
 
-            <div className="flex items-center justify-end p-4 border-t border-[#2A2A2A]">
+            {/* Card Footer */}
+            <div className="flex items-center justify-between p-6 border-t border-[var(--quizito-glass-border)]">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="mr-2">
+                  <Button 
+                    size="sm" 
+                    className="bg-[var(--quizito-hot-pink)]/20 text-[var(--quizito-hot-pink)] border border-[var(--quizito-hot-pink)]/30 hover:bg-[var(--quizito-hot-pink)]/30 hover:border-[var(--quizito-hot-pink)] transition-all duration-200"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)]">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogTitle className="text-[var(--quizito-text-primary)]">
+                      Are you sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-[var(--quizito-text-secondary)]">
                       This action cannot be undone. This will permanently delete this quiz
                       and all of its associated data.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDeleteQuiz(quiz.id)} disabled={isDeleting}>
+                    <AlertDialogCancel className="bg-[var(--quizito-glass-surface)] text-[var(--quizito-text-primary)] border-[var(--quizito-glass-border)] hover:bg-[var(--quizito-glass-surface-hover)]">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => handleDeleteQuiz(quiz.id)} 
+                      disabled={isDeleting}
+                      className="bg-[var(--quizito-hot-pink)] text-white hover:bg-[var(--quizito-hot-pink-hover)]"
+                    >
                       {isDeleting ? 'Deleting...' : 'Delete'}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-              <Button asChild size="sm" className="bg-gradient-to-r from-[#6366F1] to-[#14B8A6]">
+
+              <Button asChild size="sm" className="bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:shadow-[0_0_20px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300">
                 <Link href={`/quiz/${quiz.id}`}>
                   <Play className="h-4 w-4 mr-2" />
                   Start Quiz
                 </Link>
               </Button>
             </div>
-          </Card>
+          </div>
         </motion.div>
       ))}
     </div>

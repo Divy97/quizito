@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Github, Twitter, Mail, Heart } from "lucide-react";
+import { Github, Twitter, Mail } from "lucide-react";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -11,7 +11,6 @@ export const Footer = () => {
     product: [
       { href: "/create", label: "Create Quiz" },
       { href: "/my-quizzes", label: "My Quizzes" },
-      { href: "/explore", label: "Explore Public Quizzes" },
     ],
     support: [
       { href: "/help", label: "Help Center" },
@@ -21,7 +20,6 @@ export const Footer = () => {
     legal: [
       { href: "/privacy", label: "Privacy Policy" },
       { href: "/terms", label: "Terms of Service" },
-      { href: "/cookies", label: "Cookie Policy" },
     ],
   };
 
@@ -132,11 +130,7 @@ export const Footer = () => {
             <p className="text-muted-foreground text-sm">
               © {currentYear} Quizito. All rights reserved.
             </p>
-            <p className="flex items-center text-muted-foreground text-sm">
-              Made with{" "}
-              <Heart className="h-4 w-4 mx-1 text-red-500" />
-              for learning
-            </p>
+        
           </div>
         </div>
       </div>
