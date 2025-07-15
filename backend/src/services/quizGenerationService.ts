@@ -1,7 +1,7 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
-import { quizSchema, optionSchema } from '../types/quizSchemas';
+import { quizSchema } from '../types/quizSchemas';
 import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers";
 import { filterSemanticallyUnique, Question } from '../utils/similarity';
 import { QuizRefinementService } from './quizRefinementService';
