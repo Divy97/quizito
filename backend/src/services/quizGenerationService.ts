@@ -1,10 +1,16 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
-import { quizSchema } from '../types/quizSchemas';
-import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers";
-import { filterSemanticallyUnique, Question } from '../utils/similarity';
-import { QuizRefinementService } from './quizRefinementService';
+import { quizSchema } from '../types/quizSchemas.js';
+import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
+import { filterSemanticallyUnique, Question } from '../utils/similarity.js';
+import { QuizRefinementService } from './quizRefinementService.js';
+
+const embeddingModel = new GoogleGenerativeAIEmbeddings({
+  apiKey: process.env.GOOGLE_API_KEY!,
+  model: "text-embedding-004", 
+});
+
 
 const parser = StructuredOutputParser.fromZodSchema(quizSchema as any);
 
@@ -122,10 +128,7 @@ export const generateQuizFromSource = async (
     const results = await Promise.all(generationPromises);
 
     // 2. Filter for Uniqueness and Select
-    const embeddingModel = new HuggingFaceTransformersEmbeddings({
-        model: "Xenova/all-MiniLM-L6-v2",
-    });
-    
+  
     let finalQuestions: Question[] = [];
 
     for (let i = 0; i < results.length; i++) {

@@ -93,14 +93,14 @@ export default function CreatePage() {
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate quiz');
+        throw new Error(data.error || 'Failed to generate quiz');
       }
 
-      const quiz = await response.json();
       toast.success('Quiz generated successfully!');
-      router.push(`/quiz/${quiz.id}`);
+      router.push(`/quiz/${data.quizId}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       setError(errorMessage);
