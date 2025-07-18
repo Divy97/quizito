@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, BrainCircuit, Rocket } from 'lucide-react';
+import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, BrainCircuit, Rocket, Upload } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { LoginButton } from '@/components/ui/login-button';
@@ -34,6 +34,8 @@ export default function CreatePage() {
     question_count: 5,
     is_public: false,
   });
+  const [pdfFiles, setPdfFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -61,6 +63,7 @@ export default function CreatePage() {
       case 'topic': return 'Generate from Topic';
       case 'url': return 'Extract from URL';
       case 'youtube': return 'Analyze YouTube Video';
+      case 'pdf': return 'Upload PDF Documents';
       default: return 'Content Source';
     }
   };
@@ -70,16 +73,100 @@ export default function CreatePage() {
       case 'topic': return 'e.g., "Machine Learning Basics", "World War II", "Photosynthesis"';
       case 'url': return 'e.g., https://example.com/article-about-topic';
       case 'youtube': return 'e.g., https://youtube.com/watch?v=video-id';
+      case 'pdf': return 'Upload one or more PDF files';
       default: return 'Enter your content source...';
     }
   };
 
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Filter for PDFs only
+    const pdfs = files.filter(file => file.type === 'application/pdf');
+    if (pdfs.length === 0) {
+      toast.error('Please upload PDF files only');
+      return;
+    }
+
+    setPdfFiles(prev => [...prev, ...pdfs]);
+    e.target.value = ''; // Reset file input
+  };
+
+  const removePdf = (index: number) => {
+    setPdfFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadAndProcessPdfs = async () => {
+    if (pdfFiles.length === 0) {
+      toast.error('Please upload at least one PDF file');
+      return;
+    }
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      pdfFiles.forEach((file) => {
+        formData.append('pdfs', file);
+      });
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/pdfs`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to process PDFs');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        source_data: data.source_data,
+        source_type: 'pdf',
+      }));
+
+      toast.success(`${pdfFiles.length} PDF${pdfFiles.length > 1 ? 's' : ''} processed successfully!`);
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process PDFs';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePdfSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await uploadAndProcessPdfs();
+    if (success) {
+      // The form submission will be handled by the main form
+      // since we've updated the formData with the extracted text
+    }
+  };
+
   const isFormValid = () => {
+    if (formData.source_type === 'pdf') {
+      return formData.title.trim() && (formData.source_data.trim() || pdfFiles.length > 0);
+    }
     return formData.title.trim() && formData.source_data.trim();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If source is PDF and we have files but haven't processed them yet
+    if (formData.source_type === 'pdf' && pdfFiles.length > 0 && !formData.source_data) {
+      const success = await uploadAndProcessPdfs();
+      if (!success) return; // Don't proceed if PDF processing failed
+    }
+    
     if (!isFormValid()) return;
 
     setLoading(true);
@@ -167,12 +254,11 @@ export default function CreatePage() {
       <Toaster />
       {/* Background Effects */}
       <div className="fixed inset-0 bg-gradient-to-br from-[var(--quizito-bg-primary)] via-[var(--quizito-bg-secondary)] to-[var(--quizito-bg-primary)] -z-10" />
-      
       <motion.div
+        className="container mx-auto px-4 py-16 relative z-10"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-7xl mx-auto px-6 py-12 relative z-10"
       >
         {/* Header Section */}
         <motion.div variants={itemVariants} className="text-center mb-16">
@@ -239,50 +325,129 @@ export default function CreatePage() {
                   <h2 className="text-2xl font-bold text-[var(--quizito-text-primary)]">{getSourceLabel()}</h2>
                 </div>
                 <Tabs value={formData.source_type} onValueChange={(value) => handleInputChange("source_type", value)} className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-2 h-14">
+                  <TabsList className="grid w-full grid-cols-4 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-2 h-14">
                     <TabsTrigger value="topic" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold">
                       <Wand2 className="h-4 w-4" />
                       Topic
-                    </TabsTrigger>
-                    <TabsTrigger value="url" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold">
-                      <Link className="h-4 w-4" />
-                      URL
                     </TabsTrigger>
                     <TabsTrigger value="youtube" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold">
                       <Youtube className="h-4 w-4" />
                       YouTube
                     </TabsTrigger>
+                    <TabsTrigger value="url" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold">
+                      <Link className="h-4 w-4" />
+                      URL
+                    </TabsTrigger>
+                    <TabsTrigger value="pdf" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold">
+                      <Upload className="h-4 w-4" />
+                      PDF
+                    </TabsTrigger>
                   </TabsList>
-                  <div className="mt-8">
-                    <TabsContent value="topic" className="mt-0">
-                      <Input
-                        value={formData.source_data}
-                        onChange={(e) => handleInputChange("source_data", e.target.value)}
-                        placeholder={getSourcePlaceholder()}
-                        className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
-                      />
-                    </TabsContent>
-                    <TabsContent value="url" className="mt-0">
-                      <Input
-                        value={formData.source_data}
-                        onChange={(e) => handleInputChange("source_data", e.target.value)}
-                        placeholder={getSourcePlaceholder()}
-                        className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
-                      />
-                    </TabsContent>
-                    <TabsContent value="youtube" className="mt-0">
-                      <Input
-                        value={formData.source_data}
-                        onChange={(e) => handleInputChange("source_data", e.target.value)}
-                        placeholder={getSourcePlaceholder()}
-                        className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
-                      />
-                    </TabsContent>
-                  </div>
+                  
+                  <TabsContent value="topic" className="mt-6">
+                    <Input
+                      value={formData.source_data}
+                      onChange={(e) => handleInputChange("source_data", e.target.value)}
+                      placeholder={getSourcePlaceholder()}
+                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="url" className="mt-6">
+                    <Input
+                      value={formData.source_data}
+                      onChange={(e) => handleInputChange("source_data", e.target.value)}
+                      placeholder={getSourcePlaceholder()}
+                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="youtube" className="mt-6">
+                    <Input
+                      value={formData.source_data}
+                      onChange={(e) => handleInputChange("source_data", e.target.value)}
+                      placeholder={getSourcePlaceholder()}
+                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="pdf" className="mt-6">
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-center w-full">
+                        <label
+                          htmlFor="pdf-upload"
+                          className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-[var(--quizito-bg-secondary)] border-[var(--quizito-border)] hover:bg-[var(--quizito-bg-tertiary)] transition-colors"
+                        >
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="w-10 h-10 mb-3 text-[var(--quizito-text-secondary)]" />
+                            <p className="mb-2 text-sm text-[var(--quizito-text-secondary)]">
+                              <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-[var(--quizito-text-tertiary)]">
+                              PDF files only (MAX. 10MB each)
+                            </p>
+                          </div>
+                          <input
+                            id="pdf-upload"
+                            type="file"
+                            className="hidden"
+                            accept=".pdf"
+                            multiple
+                            onChange={handlePdfUpload}
+                          />
+                        </label>
+                      </div>
+
+                      {pdfFiles.length > 0 && (
+                        <div className="space-y-4">
+                          <p className="text-sm font-medium text-[var(--quizito-text-secondary)]">
+                            Selected Files ({pdfFiles.length}):
+                          </p>
+                          <div className="space-y-2 max-h-48 overflow-y-auto p-2 border rounded-lg border-[var(--quizito-border)]">
+                            {pdfFiles.map((file, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-2 text-sm rounded-md bg-[var(--quizito-bg-secondary)]"
+                              >
+                                <span className="truncate flex-1">{file.name}</span>
+                                <span className="text-xs text-[var(--quizito-text-tertiary)] ml-2">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removePdf(index)}
+                                  className="ml-2 text-[var(--quizito-text-tertiary)] hover:text-[var(--quizito-text-primary)]"
+                                  aria-label="Remove file"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={handlePdfSubmit}
+                              disabled={isUploading || pdfFiles.length === 0}
+                              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-[var(--quizito-electric-blue)] rounded-md hover:bg-[var(--quizito-electric-blue-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {isUploading ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Processing...
+                                </>
+                              ) : (
+                                'Process PDFs'
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
                 </Tabs>
               </div>
             </div>
-
             {/* Sidebar Configuration */}
             <div className="space-y-8">
               {/* Configuration Section */}
@@ -419,6 +584,6 @@ export default function CreatePage() {
           </motion.div>
         </form>
       </motion.div>
-    </AppLayout>
+  </AppLayout>
   );
-} 
+}
