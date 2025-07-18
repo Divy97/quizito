@@ -8,6 +8,7 @@ import logger from './config/logger.js';
 import './config/passport.js';
 import authRoutes from './routes/authRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
+import fileUploadRoutes from './routes/fileUploadRoutes.js';
 
 dotenv.config();
 
@@ -56,6 +57,7 @@ app.use(passport.initialize());
 // Routes
 app.use('/auth', authRoutes);
 app.use('/quizzes', quizRoutes);
+app.use('/api', fileUploadRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Express + TypeScript Server');
