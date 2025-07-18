@@ -4,10 +4,10 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import pinoHttp from 'pino-http';
-import logger from './config/logger';
-import './config/passport';
-import authRoutes from './routes/authRoutes';
-import quizRoutes from './routes/quizRoutes';
+import logger from './config/logger.js';
+import './config/passport.js';
+import authRoutes from './routes/authRoutes.js';
+import quizRoutes from './routes/quizRoutes.js';
 
 dotenv.config();
 
@@ -17,7 +17,7 @@ const port = process.env.PORT || 3001;
 // Middleware
 app.use(pinoHttp({ 
   logger,
-  customLogLevel: function (req, res, err) {
+  customLogLevel: function (req: Request, res: Response, err: Error) {
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'warn'
     } else if (res.statusCode >= 500 || err) {
@@ -25,20 +25,20 @@ app.use(pinoHttp({
     }
     return 'info'
   },
-  customSuccessMessage: function (req, res) {
+  customSuccessMessage: function (req: Request, res: Response) {
     return `${req.method} ${req.url} - ${res.statusCode}`
   },
-  customErrorMessage: function (req, res, err) {
+  customErrorMessage: function (req: Request, res: Response, err: Error) {
     return `${req.method} ${req.url} - ${res.statusCode} - ${err.message}`
   },
   // Only log essential request/response data
   serializers: {
-    req: (req) => ({
+    req: (req: Request) => ({
       method: req.method,
       url: req.url,
       userAgent: req.headers['user-agent']
     }),
-    res: (res) => ({
+    res: (res: Response) => ({
       statusCode: res.statusCode
     })
   }

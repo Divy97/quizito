@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import pool from '../config/database';
-import logger from '../config/logger';
+import pool from '../config/database.js';
+import logger from '../config/logger.js';
 import { z } from 'zod';
-import { generateQuizFromSource } from '../services/quizGenerationService';
-import { quizGenAPISchema, submitQuizAPISchema } from '../types/quizSchemas';
-import { QuizPersistenceService } from '../services/quizPersistenceService';
+import { generateQuizFromSource } from '../services/quizGenerationService.js';
+import { quizGenAPISchema, submitQuizAPISchema } from '../types/quizSchemas.js';
+import { QuizPersistenceService } from '../services/quizPersistenceService.js';
 
 export const generateQuiz = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.id;
@@ -220,6 +220,13 @@ export const getMyQuizzes = async (req: Request, res: Response): Promise<void> =
 export const getQuizById = async (req: Request, res: Response): Promise<void> => {
   const { quizId } = req.params;
   const userId = req.user?.id; // This might be undefined due to soft auth
+  
+  if (!quizId || quizId === 'undefined') {
+    logger.warn({ userId, quizId }, 'Invalid quiz ID provided');
+    res.status(400).json({ error: 'Quiz ID is required' });
+    return;
+  }
+  
   logger.info({ userId, quizId }, 'Fetching quiz by ID.');
 
   try {
