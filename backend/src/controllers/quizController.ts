@@ -18,17 +18,26 @@ export const generateQuiz = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const { source_data, difficulty, question_count, taxonomy_level, ...restOfQuizData } = validation.data;
+    const { source_type, difficulty, question_count, taxonomy_level, ...restOfQuizData } = validation.data;
+    let { source_data } = validation.data;
     
-    // FOR NOW, only supports the 'topic' source type.
-    if (validation.data.source_type !== 'topic') {
-        logger.warn({ userId, source_type: validation.data.source_type }, `Quiz generation failed: Unsupported source type.`);
-        res.status(501).json({ error: `${validation.data.source_type} source type not yet implemented.` });
-        return;
+    // For PDF source type, we expect the source_data to be the extracted text from the PDF
+    if (source_type === 'pdf' && !source_data) {
+      // If source_data is empty for PDF, we can't proceed
+      logger.warn({ userId, source_type }, 'Missing extracted text from PDF');
+      res.status(400).json({ error: 'Missing extracted text from PDF' });
+      return;
+    }
+    
+    // Ensure source_data is defined for TypeScript
+    if (!source_data) {
+      logger.warn({ userId, source_type }, 'Missing source data for quiz generation');
+      res.status(400).json({ error: 'Missing source data' });
+      return;
     }
     
     // 1. Generate questions from the AI service
-    logger.info({ userId, topic: source_data, difficulty, taxonomy_level }, 'Invoking quiz generation service.');
+    logger.info({ userId, source_type, difficulty, taxonomy_level }, 'Invoking quiz generation service.');
     const questionsPayload = await generateQuizFromSource(
       difficulty,
       question_count,
@@ -37,7 +46,14 @@ export const generateQuiz = async (req: Request, res: Response): Promise<void> =
     );
     
     // 2. Persist the generated quiz to the database
-    const quizData = { user_id: userId, ...restOfQuizData, source_data, difficulty, question_count };
+    const quizData = { 
+      user_id: userId, 
+      ...restOfQuizData, 
+      source_type,
+      source_data, 
+      difficulty, 
+      question_count 
+    };
     const quizId = await QuizPersistenceService.saveGeneratedQuiz(quizData, questionsPayload as any);
 
     logger.info({ userId, quizId }, 'Quiz generation process completed successfully.');
