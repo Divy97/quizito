@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
-import passport from '../config/passport';
+import passport from '../config/passport.js';
 import jwt from 'jsonwebtoken';
-import { authenticateToken } from '../middleware/authMiddleware';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 import dotenv from 'dotenv';
-import logger from '../config/logger';
+import logger from '../config/logger.js';
 
 dotenv.config();
 

@@ -1,0 +1,19 @@
+service: quizito-backend
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1 # You can change this to your preferred AWS region
+
+package:
+  patterns:
+    - '!./**'
+    - 'dist/**'
+    - 'node_modules/**'
+    - 'package.json'
+
+functions:
+  api:
+    handler: dist/index.handler
+    events:
+      - httpApi: '*'

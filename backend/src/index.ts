@@ -9,6 +9,7 @@ import './config/passport.js';
 import authRoutes from './routes/authRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
 import fileUploadRoutes from './routes/fileUploadRoutes.js';
+import serverless from 'serverless-http';
 
 dotenv.config();
 
@@ -63,6 +64,5 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Express + TypeScript Server');
 });
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
-}); 
+
+export const handler = serverless(app);
