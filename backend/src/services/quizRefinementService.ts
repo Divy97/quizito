@@ -1,8 +1,8 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
-import { quizSchema } from '../types/quizSchemas';
-import { Question } from '../utils/similarity';
+import { quizSchema } from '../types/quizSchemas.js';
+import { Question } from '../utils/similarity.js';
 
 const parser = StructuredOutputParser.fromZodSchema(quizSchema as any);
 
