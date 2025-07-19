@@ -298,7 +298,8 @@ export default function CreatePage() {
                       value={formData.title}
                       onChange={(e) => handleInputChange('title', e.target.value)}
                       placeholder="e.g., 'The Ultimate Space Trivia'"
-                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
+                      disabled={loading}
+                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                   <div className="space-y-3">
@@ -310,7 +311,8 @@ export default function CreatePage() {
                       value={formData.description}
                       onChange={(e) => handleInputChange('description', e.target.value)}
                       placeholder="A brief summary of what this quiz is about..."
-                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 resize-none min-h-[120px]"
+                      disabled={loading}
+                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 resize-none min-h-[120px] disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -326,21 +328,21 @@ export default function CreatePage() {
                 </div>
                 <Tabs value={formData.source_type} onValueChange={(value) => handleInputChange("source_type", value)} className="w-full">
                   <TabsList className="grid w-full grid-cols-4 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-2 h-14">
-                    <TabsTrigger value="topic" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold">
+                    <TabsTrigger value="topic" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold" disabled={loading}>
                       <Wand2 className="h-4 w-4" />
                       Topic
                     </TabsTrigger>
-                    <TabsTrigger value="youtube" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold">
-                      <Youtube className="h-4 w-4" />
-                      YouTube
-                    </TabsTrigger>
-                    <TabsTrigger value="url" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold">
+                    <TabsTrigger value="url" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold" disabled={loading}>
                       <Link className="h-4 w-4" />
                       URL
                     </TabsTrigger>
-                    <TabsTrigger value="pdf" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold">
+                    <TabsTrigger value="pdf" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold" disabled={loading}>
                       <Upload className="h-4 w-4" />
                       PDF
+                    </TabsTrigger>
+                    <TabsTrigger value="youtube" className="flex items-center gap-2 data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 rounded-xl font-semibold" disabled={loading}>
+                      <Youtube className="h-4 w-4" />
+                      YouTube
                     </TabsTrigger>
                   </TabsList>
                   
@@ -349,7 +351,8 @@ export default function CreatePage() {
                       value={formData.source_data}
                       onChange={(e) => handleInputChange("source_data", e.target.value)}
                       placeholder={getSourcePlaceholder()}
-                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
+                      disabled={loading}
+                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </TabsContent>
                   
@@ -358,17 +361,50 @@ export default function CreatePage() {
                       value={formData.source_data}
                       onChange={(e) => handleInputChange("source_data", e.target.value)}
                       placeholder={getSourcePlaceholder()}
-                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
+                      disabled={loading}
+                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </TabsContent>
                   
                   <TabsContent value="youtube" className="mt-6">
-                    <Input
-                      value={formData.source_data}
-                      onChange={(e) => handleInputChange("source_data", e.target.value)}
-                      placeholder={getSourcePlaceholder()}
-                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg"
-                    />
+                    <div className="relative overflow-hidden bg-gradient-to-br from-[var(--quizito-neon-purple)]/10 via-[var(--quizito-electric-blue)]/5 to-[var(--quizito-cyber-green)]/10 backdrop-blur-xl border-2 border-dashed border-[var(--quizito-neon-purple)]/30 rounded-2xl p-12 text-center">
+                      {/* Animated background elements */}
+                      <div className="absolute inset-0 overflow-hidden">
+                        <div className="absolute -top-4 -left-4 w-24 h-24 bg-[var(--quizito-neon-purple)]/20 rounded-full blur-xl animate-pulse" />
+                        <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-[var(--quizito-electric-blue)]/20 rounded-full blur-xl animate-pulse" style={{animationDelay: '1s'}} />
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[var(--quizito-cyber-green)]/20 rounded-full blur-xl animate-pulse" style={{animationDelay: '2s'}} />
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-center mb-6">
+                          <div className="relative">
+                            <Youtube className="h-16 w-16 text-[var(--quizito-neon-purple)] animate-bounce" />
+                            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-cyber-green)] text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                              SOON
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <h3 className="text-2xl font-bold text-[var(--quizito-text-primary)] mb-4">
+                          YouTube Integration
+                          <span className="bg-gradient-to-r from-[var(--quizito-neon-purple)] via-[var(--quizito-electric-blue)] to-[var(--quizito-cyber-green)] bg-clip-text text-transparent"> Coming Soon!</span>
+                        </h3>
+                        
+                        <p className="text-[var(--quizito-text-secondary)] mb-6 max-w-md mx-auto leading-relaxed">
+                          We&apos;re cooking up something amazing! Soon you&apos;ll be able to transform any YouTube video into an interactive quiz with our AI magic. ✨
+                        </p>
+                        
+                        <div className="flex items-center justify-center gap-2 text-sm text-[var(--quizito-text-muted)]">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-[var(--quizito-neon-purple)] rounded-full animate-bounce" />
+                            <div className="w-2 h-2 bg-[var(--quizito-electric-blue)] rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
+                            <div className="w-2 h-2 bg-[var(--quizito-cyber-green)] rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+                          </div>
+                          <span className="ml-2">Stay tuned for updates!</span>
+                        </div>
+                      </div>
+                    </div>
                   </TabsContent>
                   
                   <TabsContent value="pdf" className="mt-6">
@@ -376,7 +412,11 @@ export default function CreatePage() {
                       <div className="flex items-center justify-center w-full">
                         <label
                           htmlFor="pdf-upload"
-                          className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-[var(--quizito-bg-secondary)] border-[var(--quizito-border)] hover:bg-[var(--quizito-bg-tertiary)] transition-colors"
+                          className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg transition-colors ${
+                            loading 
+                              ? 'cursor-not-allowed bg-[var(--quizito-bg-secondary)]/50 border-[var(--quizito-border)]/50' 
+                              : 'cursor-pointer bg-[var(--quizito-bg-secondary)] border-[var(--quizito-border)] hover:bg-[var(--quizito-bg-tertiary)]'
+                          }`}
                         >
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <Upload className="w-10 h-10 mb-3 text-[var(--quizito-text-secondary)]" />
@@ -394,6 +434,7 @@ export default function CreatePage() {
                             accept=".pdf"
                             multiple
                             onChange={handlePdfUpload}
+                            disabled={loading}
                           />
                         </label>
                       </div>
@@ -471,7 +512,8 @@ export default function CreatePage() {
                       onChange={(e) => handleInputChange('question_count', parseInt(e.target.value, 10))}
                       min="3"
                       max="10"
-                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12"
+                      disabled={loading}
+                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                   
@@ -483,20 +525,21 @@ export default function CreatePage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
-                        className="text-xs text-[var(--quizito-electric-blue)] hover:bg-[var(--quizito-electric-blue)]/10 transition-all duration-200"
+                        disabled={loading}
+                        className="text-xs text-[var(--quizito-electric-blue)] hover:bg-[var(--quizito-electric-blue)]/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {showAdvancedSettings ? 'Hide Advanced' : 'Advanced'}
                       </Button>
                     </div>
                     <Tabs value={formData.difficulty} onValueChange={(value) => handleInputChange("difficulty", value)} className="w-full">
                       <TabsList className="grid w-full grid-cols-3 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl p-1 h-12">
-                        <TabsTrigger value="easy" className="data-[state=active]:bg-[var(--quizito-cyber-green)] data-[state=active]:text-black transition-all duration-300 font-semibold">
+                        <TabsTrigger value="easy" className="data-[state=active]:bg-[var(--quizito-cyber-green)] data-[state=active]:text-black transition-all duration-300 font-semibold" disabled={loading}>
                           Easy
                         </TabsTrigger>
-                        <TabsTrigger value="medium" className="data-[state=active]:bg-[var(--quizito-electric-yellow)] data-[state=active]:text-black transition-all duration-300 font-semibold">
+                        <TabsTrigger value="medium" className="data-[state=active]:bg-[var(--quizito-electric-yellow)] data-[state=active]:text-black transition-all duration-300 font-semibold" disabled={loading}>
                           Medium
                         </TabsTrigger>
-                        <TabsTrigger value="hard" className="data-[state=active]:bg-[var(--quizito-hot-pink)] data-[state=active]:text-white transition-all duration-300 font-semibold">
+                        <TabsTrigger value="hard" className="data-[state=active]:bg-[var(--quizito-hot-pink)] data-[state=active]:text-white transition-all duration-300 font-semibold" disabled={loading}>
                           Hard
                         </TabsTrigger>
                       </TabsList>
@@ -516,16 +559,16 @@ export default function CreatePage() {
                       </Label>
                       <Tabs value={formData.taxonomy_level || ''} onValueChange={(value) => handleInputChange("taxonomy_level", value)} className="w-full">
                         <TabsList className="grid w-full grid-cols-2 gap-2 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl p-2 h-auto">
-                          <TabsTrigger value="remembering" className="data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 py-2">
+                          <TabsTrigger value="remembering" className="data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 py-2" disabled={loading}>
                             Remember
                           </TabsTrigger>
-                          <TabsTrigger value="understanding" className="data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 py-2">
+                          <TabsTrigger value="understanding" className="data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 py-2" disabled={loading}>
                             Understand
                           </TabsTrigger>
-                          <TabsTrigger value="applying" className="data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 py-2">
+                          <TabsTrigger value="applying" className="data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 py-2" disabled={loading}>
                             Apply
                           </TabsTrigger>
-                          <TabsTrigger value="analyzing" className="data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 py-2">
+                          <TabsTrigger value="analyzing" className="data-[state=active]:bg-[var(--quizito-electric-blue)] data-[state=active]:text-white transition-all duration-300 py-2" disabled={loading}>
                             Analyze
                           </TabsTrigger>
                         </TabsList>
@@ -542,7 +585,8 @@ export default function CreatePage() {
                       id="public-switch"
                       checked={formData.is_public}
                       onCheckedChange={(value) => handleInputChange('is_public', value)}
-                      className="data-[state=checked]:bg-[var(--quizito-cyber-green)] data-[state=unchecked]:bg-[var(--quizito-text-muted)] scale-125"
+                      disabled={loading}
+                      className="data-[state=checked]:bg-[var(--quizito-cyber-green)] data-[state=unchecked]:bg-[var(--quizito-text-muted)] scale-125 disabled:opacity-50"
                     />
                   </div>
                 </div>

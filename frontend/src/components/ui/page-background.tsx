@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { MouseGlowEffect } from "./mouse-glow-effect";
 
 interface PageBackgroundProps {
   variant?: "default" | "hero" | "minimal";
@@ -21,6 +22,7 @@ export const PageBackground = ({ variant = "default", children }: PageBackground
 
   return (
     <div className={`min-h-screen ${getBackgroundClasses()}`}>
+      <MouseGlowEffect />
       {children}
     </div>
   );
