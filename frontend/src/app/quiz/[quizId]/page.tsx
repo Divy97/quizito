@@ -19,14 +19,6 @@ export type ClientQuestion = {
   correctOptionId: string;
 };
 
-type ClientQuizData = {
-  id: string;
-  title: string;
-  description: string | null;
-  questions: ClientQuestion[];
-  is_public: boolean;
-};
-
 type LeaderboardEntry = {
   nickname: string;
   score: number;
