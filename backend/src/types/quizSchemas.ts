@@ -34,7 +34,7 @@ const baseQuizSchema = {
 // Schema for non-PDF sources
 const nonPdfSourceSchema = z.object({
   ...baseQuizSchema,
-  source_type: z.enum(['topic', 'url', 'youtube']),
+  source_type: z.enum(['topic', 'youtube', 'url']),
   source_data: z.string().min(3, 'The source must be at least 3 characters long.'),
 });
 
