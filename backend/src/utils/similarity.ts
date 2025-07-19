@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { questionSchema } from '../types/quizSchemas';
+import { questionSchema } from '../types/quizSchemas.js';
 
 // Re-exporting the inferred type for use in other services
 export type Question = z.infer<typeof questionSchema>;

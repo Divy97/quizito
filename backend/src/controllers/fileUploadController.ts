@@ -1,15 +1,6 @@
 import { Request, Response } from 'express';
 import { PdfProcessingService } from '../services/pdfProcessingService.js';
 import logger from '../config/logger.js';
-
-declare global {
-  namespace Express {
-    interface Request {
-      files?: Express.Multer.File[];
-    }
-  }
-}
-
 export class FileUploadController {
   /**
    * Handles multiple PDF file uploads
