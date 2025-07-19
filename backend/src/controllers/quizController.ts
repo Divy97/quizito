@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { generateQuizFromSource } from '../services/quizGenerationService.js';
 import { quizGenAPISchema, submitQuizAPISchema } from '../types/quizSchemas.js';
 import { QuizPersistenceService } from '../services/quizPersistenceService.js';
+import { ArticleScrapingService } from '../services/articleScrapingService.js';
 
 export const generateQuiz = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.id;
@@ -21,16 +22,46 @@ export const generateQuiz = async (req: Request, res: Response): Promise<void> =
     const { source_type, difficulty, question_count, taxonomy_level, ...restOfQuizData } = validation.data;
     let { source_data } = validation.data;
     
-    // For PDF source type, we expect the source_data to be the extracted text from the PDF
-    if (source_type === 'pdf' && !source_data) {
-      // If source_data is empty for PDF, we can't proceed
-      logger.warn({ userId, source_type }, 'Missing extracted text from PDF');
-      res.status(400).json({ error: 'Missing extracted text from PDF' });
-      return;
-    }
-    
-    // Ensure source_data is defined for TypeScript
-    if (!source_data) {
+    // Handle different source types
+    if (source_type === 'pdf') {
+      // For PDF source type, we expect the source_data to be the extracted text from the PDF
+      if (!source_data) {
+        logger.warn({ userId, source_type }, 'Missing extracted text from PDF');
+        res.status(400).json({ error: 'Missing extracted text from PDF' });
+        return;
+      }
+    } else if (source_type === 'url') {
+      // For article source type, we expect source_data to be a URL
+      if (!source_data) {
+        logger.warn({ userId, source_type }, 'Missing article URL');
+        res.status(400).json({ error: 'Article URL is required' });
+        return;
+      }
+      
+      try {
+        // Validate URL format
+        new URL(source_data);
+        
+        // Extract article content
+        logger.info({ userId, url: source_data }, 'Extracting article content');
+        const articleContent = await ArticleScrapingService.extractArticleContent(source_data);
+        
+        if (!articleContent) {
+          logger.warn({ userId, url: source_data }, 'Failed to extract article content');
+          res.status(400).json({ error: 'Could not extract content from the provided article URL' });
+          return;
+        }
+        
+        // Use the extracted content for quiz generation
+        source_data = articleContent;
+      } catch (error) {
+        logger.error({ userId, url: source_data, error }, 'Error processing article URL');
+        const errorMessage = error instanceof Error ? error.message : 'Invalid URL or error fetching article';
+        res.status(400).json({ error: `Article processing failed: ${errorMessage}` });
+        return;
+      }
+    } else if (!source_data) {
+      // For other source types, ensure source_data is provided
       logger.warn({ userId, source_type }, 'Missing source data for quiz generation');
       res.status(400).json({ error: 'Missing source data' });
       return;
