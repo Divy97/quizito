@@ -1,9 +1,13 @@
 service: quizito-backend
 
+plugins:
+  - serverless-dotenv-plugin
+
 provider:
   name: aws
   runtime: nodejs20.x
-  region: us-east-1 # You can change this to your preferred AWS region
+  region: us-east-1 
+  vpc: [] 
 
 package:
   patterns:
@@ -11,6 +15,7 @@ package:
     - 'dist/**'
     - 'node_modules/**'
     - 'package.json'
+    - '.env'
 
 functions:
   api:
