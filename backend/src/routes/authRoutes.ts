@@ -39,9 +39,9 @@ router.get('/google/callback',
     // Set JWT in a secure, HttpOnly cookie
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', 
+      maxAge: 24 * 60 * 60 * 1000, 
     });
 
     // Redirect to the frontend application
