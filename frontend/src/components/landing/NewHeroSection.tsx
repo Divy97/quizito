@@ -1,29 +1,9 @@
 "use client";
-import { useState } from 'react';
-import { ArrowRight, Sparkles, Wand2, Loader2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 export const NewHeroSection = () => {
-  const [demoText, setDemoText] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [sampleQuestions, setSampleQuestions] = useState<string[]>([]);
-
-  const generateSampleQuiz = async () => {
-    if (!demoText.trim()) return;
-    
-    setIsGenerating(true);
-    // Simulate AI generation with sample questions
-    setTimeout(() => {
-      const samples = [
-        "What is the main concept discussed in this content?",
-        "Which of the following best summarizes the key point?",
-        "How does this information relate to practical applications?"
-      ];
-      setSampleQuestions(samples);
-      setIsGenerating(false);
-    }, 2000);
-  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -53,7 +33,8 @@ export const NewHeroSection = () => {
       <motion.div
         variants={containerVariants}
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
         className="container mx-auto px-6 z-10 max-w-7xl"
       >
         {/* Headline */}
@@ -71,7 +52,7 @@ export const NewHeroSection = () => {
           {/* Sub-headline */}
           <p className="max-w-3xl mx-auto text-xl md:text-2xl text-[var(--quizito-text-secondary)] leading-relaxed font-medium">
             Quizito uses advanced AI to generate thoughtful, accurate questions from your articles, documents, and study notes. 
-            <span className="text-[var(--quizito-electric-blue)] font-semibold"> Perfect for educators, trainers, and creators.</span>
+            <span className="text-[var(--quizito-electric-blue)] font-semibold"> Perfect for Students, Educators, Trainers, and Creators.</span>
           </p>
         </motion.div>
 

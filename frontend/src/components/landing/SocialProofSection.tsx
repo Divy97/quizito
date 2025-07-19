@@ -73,7 +73,7 @@ export const SocialProofSection = () => {
             <span className="bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-cyber-green)] bg-clip-text text-transparent"> Quiz Revolution</span>
           </h2>
           <p className="max-w-3xl mx-auto text-xl text-[var(--quizito-text-secondary)] leading-relaxed">
-            Educators, trainers, and creators around the world are transforming their content with Quizito.
+            Students, Educators, trainers, and creators around the world are transforming their content with Quizito.
           </p>
         </motion.div>
 
