@@ -5,6 +5,7 @@ import { quizSchema } from '../types/quizSchemas.js';
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { filterSemanticallyUnique, Question } from '../utils/similarity.js';
 import { QuizRefinementService } from './quizRefinementService.js';
+import { StringOutputParser } from '@langchain/core/output_parsers';
 
 const embeddingModel = new GoogleGenerativeAIEmbeddings({
   apiKey: process.env.GOOGLE_API_KEY!,
@@ -85,15 +86,33 @@ const generateQuestionsForTaxonomy = async (
     model: 'claude-3-5-sonnet-20240620',
     temperature,
   });
-
-  const prompt = getPromptTemplate(taxonomyLevel);
-  const chain = prompt.pipe(model).pipe(parser);
   
-  return chain.invoke({
+  const prompt = getPromptTemplate(taxonomyLevel);
+
+  // chain that just gets the raw string output
+  const stringParser = new StringOutputParser();
+  const chain = prompt.pipe(model).pipe(stringParser);
+  
+  // Invoke the chain to get the raw string
+  const rawOutput = await chain.invoke({
     question_count: questionCount,
     source_data: sourceData,
     format_instructions: parser.getFormatInstructions(),
   });
+
+  try {
+    // Clean the raw string to remove markdown fences
+    const cleanedOutput = rawOutput.replace(/```json\n?|```/g, "").trim();
+
+    // Manually parse the cleaned string
+    const parsedJson = await parser.parse(cleanedOutput);
+    return parsedJson;
+
+  } catch (e) {
+    console.error("Failed to parse cleaned JSON:", e);
+    console.error("Raw LLM Output that failed parsing:", rawOutput);
+    return { questions: [] }; 
+  }
 };
 
 
