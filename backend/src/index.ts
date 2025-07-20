@@ -14,20 +14,47 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [process.env.FRONTEND_URL, 'https://quizito.vercel.app'];
+const whitelist = [
+  'https://quizito.vercel.app'
+];
 
-// Middleware
+if (process.env.FRONTEND_URL) {
+  whitelist.push(process.env.FRONTEND_URL);
+}
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    console.log('CORS Debug - Request origin:', origin);
+    console.log('CORS Debug - Whitelist:', whitelist);
+    
+    if (!origin) {
+        console.log('CORS Debug - No origin, allowing');
+        return callback(null, true);
+    }
+    
+    const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+    console.log('CORS Debug - Normalized origin:', normalizedOrigin);
+
+    const isAllowed = whitelist.some(allowedOrigin => {
+        const normalizedAllowed = allowedOrigin.endsWith('/') ? allowedOrigin.slice(0, -1) : allowedOrigin;
+        console.log('CORS Debug - Checking against:', normalizedAllowed);
+        return normalizedAllowed === normalizedOrigin;
+    });
+
+    console.log('CORS Debug - Is allowed:', isAllowed);
+
+    if (isAllowed) {
+      callback(null, true)
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.log('CORS Debug - Origin not allowed, blocking');
+      callback(new Error('Not allowed by CORS'))
     }
   },
-  credentials: true
-}));
+  credentials: true,
+};
+
+// Middleware
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());

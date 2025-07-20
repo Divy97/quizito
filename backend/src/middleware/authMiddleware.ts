@@ -27,8 +27,18 @@ declare global {
 }
 
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  console.log('Incoming headers:', req.headers);
+  console.log('in middleware......')
+  let token = req.cookies.token;
 
-  const token = req.cookies.token;
+  console.log('token',token);
+
+  if (!token && req.headers.authorization) {
+    const parts = req.headers.authorization.split(' ');
+    if (parts.length === 2 && parts[0] === 'Bearer') {
+      token = parts[1];
+    }
+  }
   console.log('token',token)
   if (!token) {
     res.status(401).json({ message: 'Authentication required: No token provided.' });
