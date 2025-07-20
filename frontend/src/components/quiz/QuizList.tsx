@@ -8,6 +8,7 @@ import { MyQuiz } from '@/app/my-quizzes/page';
 import { Button } from '@/components/ui/button';
 import { FileText, Play, Trash2, HelpCircle, ChevronsUpDown, BarChart2, Zap } from 'lucide-react';
 import { toast } from "sonner";
+import { fetchWithAuth } from '@/lib/api';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,9 +38,8 @@ export function QuizList({ quizzes: initialQuizzes }: QuizListProps) {
     setIsDeleting(true);
     toast.loading('Deleting quiz...');
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizId}`, {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizId}`, {
         method: 'DELETE',
-        credentials: 'include',
       });
 
       if (!response.ok) {

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ClientQuestion } from '@/app/quiz/[quizId]/page';
 import { Button } from '@/components/ui/button';
+import { fetchWithAuth } from '@/lib/api';
 import { Check, X, RefreshCw, BarChart, User, Play, Trophy, Sparkles, Brain } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -101,10 +102,9 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
     const timeTaken = Math.round((Date.now() - startTime) / 1000);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/submit`, {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           quizId: quizData.id,
           answers: finalAnswers,
