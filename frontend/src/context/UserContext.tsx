@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { fetchWithAuth } from '@/lib/api';
 
 // Define the User type
 interface User {
@@ -35,12 +36,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`);
 
       if (response.ok) {
         const userData = await response.json();
