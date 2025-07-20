@@ -29,11 +29,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUser = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include', // Important to send cookies
       });
 
       if (response.ok) {
@@ -56,10 +62,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      localStorage.removeItem('token');
       setUser(null);
     } catch (error) {
       console.error('Logout failed', error);

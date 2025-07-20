@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
-import Cookies from 'js-cookie';
+
 
 export default function CallbackHandler() {
   const router = useRouter();
@@ -14,12 +14,8 @@ export default function CallbackHandler() {
     const token = searchParams.get('token');
 
     if (token) {
-      // Set the cookie to be accessible by the browser
-      Cookies.set('token', token, {
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        expires: 1 // 1 day
-      });
+      // Store the token in localStorage
+      localStorage.setItem('token', token);
       
       // Fetch the user to update the context
       fetchUser().then(() => {
