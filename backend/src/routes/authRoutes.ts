@@ -39,10 +39,12 @@ router.get('/google/callback',
     });
 
     // Set JWT in a secure, HttpOnly cookie
+    const isSecureConnection = (process.env.FRONTEND_URL || '').startsWith('https://');
+
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'strict' | 'none' | undefined,
+      secure: isSecureConnection,
+      sameSite: (isSecureConnection ? 'none' : 'lax') as 'lax' | 'strict' | 'none' | undefined,
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     };
     console.log('Setting cookie with options:', cookieOptions);

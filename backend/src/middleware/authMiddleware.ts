@@ -27,9 +27,9 @@ declare global {
 }
 
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  console.log("in middleware",req.cookies.token)
-  const token = req.cookies.token;
 
+  const token = req.cookies.token;
+  console.log('token',token)
   if (!token) {
     res.status(401).json({ message: 'Authentication required: No token provided.' });
     return;
