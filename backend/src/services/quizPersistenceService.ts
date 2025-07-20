@@ -1,5 +1,5 @@
 import pool from '../config/database.js';
-import logger from '../config/logger.js';
+
 
 interface QuestionPayload {
   question_text: string;
@@ -43,7 +43,7 @@ export class QuizPersistenceService {
     } = quizData;
     const { questions } = questionsPayload;
 
-    logger.info({ userId: user_id, quizTitle: title }, 'Starting database transaction to save quiz.');
+    console.log({ userId: user_id, quizTitle: title }, 'Starting database transaction to save quiz.');
     const client = await pool.connect();
 
     try {
@@ -79,7 +79,7 @@ export class QuizPersistenceService {
       }
 
       await client.query('COMMIT');
-      logger.info({ userId: user_id, quizId }, 'Quiz generated and saved successfully.');
+      console.log({ userId: user_id, quizId }, 'Quiz generated and saved successfully.');
 
       return quizId;
 

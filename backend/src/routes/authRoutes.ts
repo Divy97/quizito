@@ -3,7 +3,7 @@ import passport from '../config/passport.js';
 import jwt from 'jsonwebtoken';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 import dotenv from 'dotenv';
-import logger from '../config/logger.js';
+
 
 dotenv.config();
 
@@ -23,26 +23,30 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', { session: false }),
   (req, res) => {
+    console.log('--- Google Callback Reached ---');
+    console.log('User object from Passport:', req.user);
     if (!req.user) {
-      logger.error('Authentication failed: No user object in request after Google callback.');
+      console.error('Authentication failed: No user object in request after Google callback.');
       res.status(401).json({ message: 'Authentication failed' });
       return;
     }
     // User is authenticated, create JWT
     const user = req.user as User;
-    logger.info({ userId: user.id }, 'User authenticated successfully via Google. Creating JWT.');
+    console.log({ userId: user.id }, 'User authenticated successfully via Google. Creating JWT.');
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, {
       expiresIn: '1d',
     });
 
     // Set JWT in a secure, HttpOnly cookie
-    res.cookie('token', token, {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', 
-      maxAge: 24 * 60 * 60 * 1000, 
-    });
+      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'strict' | 'none' | undefined,
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    };
+    console.log('Setting cookie with options:', cookieOptions);
+    res.cookie('token', token, cookieOptions);
 
     // Redirect to the frontend application
     res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
@@ -51,13 +55,13 @@ router.get('/google/callback',
 
 // 3. A protected route to get the current user's information
 router.get('/me', authenticateToken, (req: Request, res: Response) => {
-  logger.info({ userId: req.user?.id }, 'User data requested for /me endpoint.');
+  console.log("in /me")
   res.json(req.user);
 });
 
 // 4. Logout route
 router.post('/logout', (req: Request, res: Response) => {
-  logger.info('User logging out.');
+  console.log('User logging out.');
   res.clearCookie('token');
   res.status(200).json({ message: 'Logged out successfully' });
 });

@@ -2,6 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import dotenv from 'dotenv';
 import pool from './database.js';
+import e from 'express';
 
 dotenv.config();
 
@@ -27,6 +28,14 @@ passport.use(new GoogleStrategy({
     const email = emails[0].value;
     const avatarUrl = photos ? photos[0].value : null;
 
+    console.log('in passport', {
+      id, 
+      email,
+      accessToken,
+      refreshToken,
+      profile,
+    })
+    
     try {
       const { rows } = await pool.query(
         'SELECT * FROM users WHERE google_id = $1',
