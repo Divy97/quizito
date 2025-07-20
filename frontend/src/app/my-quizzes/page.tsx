@@ -9,6 +9,7 @@ import { Lock, Loader2, Plus, Sparkles, Zap, Trophy, BarChart3 } from 'lucide-re
 import { QuizList } from '@/components/quiz/QuizList';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { fetchWithAuth } from '@/lib/api';
 
 export type MyQuiz = {
   id: string;
@@ -57,11 +58,7 @@ export default function MyQuizzesPage() {
     const fetchQuizzes = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/my-quizzes`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-        });
+        const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/my-quizzes`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch quizzes');
