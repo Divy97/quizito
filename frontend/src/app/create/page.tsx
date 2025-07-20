@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, BrainCircuit, Rocket, Upload } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
+import { fetchWithAuth } from '@/lib/api';
 import { LoginButton } from '@/components/ui/login-button';
 
 export default function CreatePage() {
@@ -112,9 +113,8 @@ export default function CreatePage() {
         formData.append('pdfs', file);
       });
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/pdfs`, {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/pdfs`, {
         method: 'POST',
-        credentials: 'include',
         body: formData,
       });
 
@@ -173,10 +173,8 @@ export default function CreatePage() {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/generate`, {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(formData),
       });
 
