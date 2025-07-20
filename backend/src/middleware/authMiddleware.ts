@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import pool from '../config/database.js';
 import dotenv from 'dotenv';
-import logger from '../config/logger.js';
+
 
 dotenv.config();
 
@@ -27,6 +27,7 @@ declare global {
 }
 
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  console.log("in middleware",req.cookies.token)
   const token = req.cookies.token;
 
   if (!token) {
@@ -74,7 +75,7 @@ export const softAuthenticateToken = async (req: Request, res: Response, next: N
   } catch (error) {
     // Invalid token, but we don't fail the request.
     // We just proceed without a user.
-    logger.warn({ error }, 'Invalid token encountered during soft authentication. Proceeding without user.');
+    console.warn({ error }, 'Invalid token encountered during soft authentication. Proceeding without user.');
   }
   
   next();

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../config/database.js';
-import logger from '../config/logger.js';
+
 import { z } from 'zod';
 import { generateQuizFromSource } from '../services/quizGenerationService.js';
 import { quizGenAPISchema, submitQuizAPISchema } from '../types/quizSchemas.js';
@@ -9,12 +9,12 @@ import { ArticleScrapingService } from '../services/articleScrapingService.js';
 
 export const generateQuiz = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.id;
-  logger.info({ userId }, 'Quiz generation process started.');
+  console.log({ userId }, 'Quiz generation process started.');
 
   try {
     const validation = quizGenAPISchema.safeParse(req.body);
     if (!validation.success) {
-      logger.warn({ userId, errors: validation.error.flatten().fieldErrors }, 'Quiz generation validation failed.');
+      console.warn({ userId, errors: validation.error.flatten().fieldErrors }, 'Quiz generation validation failed.');
       res.status(400).json({ error: validation.error.flatten().fieldErrors });
       return;
     }
@@ -26,14 +26,14 @@ export const generateQuiz = async (req: Request, res: Response): Promise<void> =
     if (source_type === 'pdf') {
       // For PDF source type, we expect the source_data to be the extracted text from the PDF
       if (!source_data) {
-        logger.warn({ userId, source_type }, 'Missing extracted text from PDF');
+        console.warn({ userId, source_type }, 'Missing extracted text from PDF');
         res.status(400).json({ error: 'Missing extracted text from PDF' });
         return;
       }
     } else if (source_type === 'url') {
       // For article source type, we expect source_data to be a URL
       if (!source_data) {
-        logger.warn({ userId, source_type }, 'Missing article URL');
+        console.warn({ userId, source_type }, 'Missing article URL');
         res.status(400).json({ error: 'Article URL is required' });
         return;
       }
@@ -43,11 +43,11 @@ export const generateQuiz = async (req: Request, res: Response): Promise<void> =
         new URL(source_data);
         
         // Extract article content
-        logger.info({ userId, url: source_data }, 'Extracting article content');
+        console.log({ userId, url: source_data }, 'Extracting article content');
         const articleContent = await ArticleScrapingService.extractArticleContent(source_data);
         
         if (!articleContent) {
-          logger.warn({ userId, url: source_data }, 'Failed to extract article content');
+          console.warn({ userId, url: source_data }, 'Failed to extract article content');
           res.status(400).json({ error: 'Could not extract content from the provided article URL' });
           return;
         }
@@ -55,20 +55,20 @@ export const generateQuiz = async (req: Request, res: Response): Promise<void> =
         // Use the extracted content for quiz generation
         source_data = articleContent;
       } catch (error) {
-        logger.error({ userId, url: source_data, error }, 'Error processing article URL');
+        console.error({ userId, url: source_data, error }, 'Error processing article URL');
         const errorMessage = error instanceof Error ? error.message : 'Invalid URL or error fetching article';
         res.status(400).json({ error: `Article processing failed: ${errorMessage}` });
         return;
       }
     } else if (!source_data) {
       // For other source types, ensure source_data is provided
-      logger.warn({ userId, source_type }, 'Missing source data for quiz generation');
+      console.warn({ userId, source_type }, 'Missing source data for quiz generation');
       res.status(400).json({ error: 'Missing source data' });
       return;
     }
     
     // 1. Generate questions from the AI service
-    logger.info({ userId, source_type, difficulty, taxonomy_level }, 'Invoking quiz generation service.');
+    console.log({ userId, source_type, difficulty, taxonomy_level }, 'Invoking quiz generation service.');
     const questionsPayload = await generateQuizFromSource(
       difficulty,
       question_count,
@@ -87,11 +87,11 @@ export const generateQuiz = async (req: Request, res: Response): Promise<void> =
     };
     const quizId = await QuizPersistenceService.saveGeneratedQuiz(quizData, questionsPayload as any);
 
-    logger.info({ userId, quizId }, 'Quiz generation process completed successfully.');
+    console.log({ userId, quizId }, 'Quiz generation process completed successfully.');
     res.status(201).json({ quizId });
 
   } catch (error) {
-    logger.error({ userId, error }, 'An error occurred during quiz generation.');
+    console.error({ userId, error }, 'An error occurred during quiz generation.');
     if (error instanceof z.ZodError) {
       res.status(422).json({ error: 'Invalid payload from AI model.' });
     } else {
@@ -104,10 +104,10 @@ export const deleteQuiz = async (req: Request, res: Response): Promise<void> => 
   const { quizId } = req.params;
   const userId = req.user?.id;
 
-  logger.info({ userId, quizId }, 'Attempting to delete quiz.');
+  console.log({ userId, quizId }, 'Attempting to delete quiz.');
 
   if (!quizId) {
-    logger.warn({ userId }, 'Delete quiz failed: Missing quizId.');
+    console.warn({ userId }, 'Delete quiz failed: Missing quizId.');
     res.status(400).json({ error: 'Quiz ID is required.' });
     return;
   }
@@ -120,16 +120,16 @@ export const deleteQuiz = async (req: Request, res: Response): Promise<void> => 
     );
 
     if (deleteResult.rowCount === 0) {
-      logger.warn({ userId, quizId }, 'Delete quiz failed: Quiz not found or user does not have permission.');
+      console.warn({ userId, quizId }, 'Delete quiz failed: Quiz not found or user does not have permission.');
       res.status(404).json({ error: 'Quiz not found or you do not have permission to delete it.' });
       return;
     }
 
-    logger.info({ userId, quizId }, 'Quiz deleted successfully.');
+    console.log({ userId, quizId }, 'Quiz deleted successfully.');
     res.status(200).json({ message: 'Quiz deleted successfully.' });
 
   } catch (error) {
-    logger.error({ userId, quizId, error }, 'An unexpected error occurred while deleting quiz.');
+    console.error({ userId, quizId, error }, 'An unexpected error occurred while deleting quiz.');
     res.status(500).json({ error: 'An unexpected error occurred.' });
   }
 };
@@ -139,13 +139,13 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
   const userId = req.user?.id;
 
   if (!validation.success) {
-    logger.warn({ userId, errors: validation.error.flatten().fieldErrors }, 'Quiz submission validation failed.');
+    console.warn({ userId, errors: validation.error.flatten().fieldErrors }, 'Quiz submission validation failed.');
     res.status(400).json({ error: validation.error.flatten().fieldErrors });
     return;
   }
 
   const { quizId, answers, nickname, timeTaken } = validation.data;
-  logger.info({ userId, quizId, nickname }, 'Quiz submission received.');
+  console.log({ userId, quizId, nickname }, 'Quiz submission received.');
   
   const client = await pool.connect();
 
@@ -154,7 +154,7 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
     const quizResult = await client.query('SELECT is_public, user_id FROM quizzes WHERE id = $1', [quizId]);
 
     if (quizResult.rowCount === 0) {
-      logger.warn({ userId, quizId }, 'Quiz submission failed: Quiz not found.');
+      console.warn({ userId, quizId }, 'Quiz submission failed: Quiz not found.');
       res.status(404).json({ error: 'Quiz not found.' });
       return;
     }
@@ -164,14 +164,14 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
 
     // Security Check: Block submission to private quizzes by non-owners
     if (!quiz.is_public && !isOwner) {
-      logger.warn({ userId, quizId }, 'Quiz submission failed: Attempted to submit to a private quiz without ownership.');
+      console.warn({ userId, quizId }, 'Quiz submission failed: Attempted to submit to a private quiz without ownership.');
       res.status(403).json({ error: 'You do not have permission to submit to this quiz.' });
       return;
     }
 
     // Validation: Nickname is required for public, non-owner submissions
     if (quiz.is_public && !isOwner && !nickname) {
-      logger.warn({ userId, quizId }, 'Quiz submission failed: Nickname is required for public quizzes.');
+      console.warn({ userId, quizId }, 'Quiz submission failed: Nickname is required for public quizzes.');
       res.status(400).json({ error: 'Nickname is required for public quizzes.' });
       return;
     }
@@ -212,7 +212,7 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
          VALUES ($1, $2, $3, $4, $5)`,
         [quizId, userId ?? null, finalNickname, Math.round(finalScore), Math.round(timeTaken)]
     );
-    logger.info({ userId, quizId, score: finalScore }, 'Quiz attempt saved successfully.');
+    console.log({ userId, quizId, score: finalScore }, 'Quiz attempt saved successfully.');
     
     // 4. Fetch leaderboard if public
     let leaderboard = [];
@@ -234,7 +234,7 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
     });
 
   } catch (error) {
-    logger.error({ userId, quizId, error }, 'An unexpected error occurred during quiz submission.');
+    console.error({ userId, quizId, error }, 'An unexpected error occurred during quiz submission.');
     res.status(500).json({ error: 'An unexpected error occurred.' });
   } finally {
     client.release();
@@ -243,7 +243,7 @@ export const submitQuiz = async (req: Request, res: Response): Promise<void> => 
 
 export const getMyQuizzes = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.id;
-  logger.info({ userId }, 'Fetching quizzes for user.');
+  console.log({ userId }, 'Fetching quizzes for user.');
 
   try {
     const { rows } = await pool.query(
@@ -259,7 +259,7 @@ export const getMyQuizzes = async (req: Request, res: Response): Promise<void> =
     );
     res.status(200).json(rows);
   } catch (error) {
-    logger.error({ userId, error }, 'An error occurred while fetching user quizzes.');
+    console.error({ userId, error }, 'An error occurred while fetching user quizzes.');
     res.status(500).json({ error: 'An unexpected error occurred.' });
   }
 };
@@ -269,12 +269,12 @@ export const getQuizById = async (req: Request, res: Response): Promise<void> =>
   const userId = req.user?.id; // This might be undefined due to soft auth
   
   if (!quizId || quizId === 'undefined') {
-    logger.warn({ userId, quizId }, 'Invalid quiz ID provided');
+    console.warn({ userId, quizId }, 'Invalid quiz ID provided');
     res.status(400).json({ error: 'Quiz ID is required' });
     return;
   }
   
-  logger.info({ userId, quizId }, 'Fetching quiz by ID.');
+  console.log({ userId, quizId }, 'Fetching quiz by ID.');
 
   try {
     // First, get the quiz and check ownership/visibility
@@ -325,7 +325,7 @@ export const getQuizById = async (req: Request, res: Response): Promise<void> =>
     res.status(200).json(finalQuizData);
 
   } catch (error) {
-    logger.error({ userId, quizId, error }, 'An error occurred while fetching quiz by ID.');
+    console.error({ userId, quizId, error }, 'An error occurred while fetching quiz by ID.');
     res.status(500).json({ error: 'An unexpected error occurred.' });
   }
 };
