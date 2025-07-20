@@ -1,6 +1,6 @@
 "use client";
 import { ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 
 export const NewHeroSection = () => {
@@ -23,7 +23,7 @@ export const NewHeroSection = () => {
       opacity: 1,
       transition: { 
         duration: 0.6, 
-        ease: [0.22, 1, 0.36, 1] 
+        ease: "easeOut"
       }
     }
   };
@@ -38,7 +38,7 @@ export const NewHeroSection = () => {
         className="container mx-auto px-6 z-10 max-w-7xl"
       >
         {/* Headline */}
-        <motion.div variants={itemVariants} className="text-center mb-12">
+        <motion.div variants={itemVariants as Variants} className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
             <span className="bg-gradient-to-r from-[var(--quizito-electric-blue)] via-[var(--quizito-neon-purple)] to-[var(--quizito-cyber-green)] bg-clip-text text-transparent">
               From Content to Quiz
@@ -132,7 +132,7 @@ export const NewHeroSection = () => {
         {/* </motion.div> */} 
 
         {/* Primary CTA */}
-        <motion.div variants={itemVariants} className="text-center">
+        <motion.div variants={itemVariants as Variants} className="text-center">
           <Link href="/create">
             <motion.button
               whileHover={{ scale: 1.05, y: -2 }}
