@@ -50,8 +50,8 @@ router.get('/google/callback',
     console.log('Setting cookie with options:', cookieOptions);
     res.cookie('token', token, cookieOptions);
 
-    // Redirect to the frontend application
-    res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+    // Redirect to the frontend application with the token as a query parameter
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
   }
 );
 
