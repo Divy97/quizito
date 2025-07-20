@@ -15,6 +15,7 @@ interface User {
 interface UserContextType {
   user: User | null;
   isLoading: boolean;
+  fetchUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -66,7 +67,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, isLoading, logout }}>
+    <UserContext.Provider value={{ user, isLoading, fetchUser, logout }}>
       {children}
     </UserContext.Provider>
   );
