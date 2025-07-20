@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 
 import { AppLayout } from '@/components/ui/app-layout';
 import { BodyText } from '@/components/ui/typography';
@@ -261,7 +261,7 @@ export default function CreatePage() {
         animate="visible"
       >
         {/* Header Section */}
-        <motion.div variants={itemVariants} className="text-center mb-16">
+        <motion.div variants={itemVariants as Variants} className="text-center mb-16">
           <div className="inline-flex items-center gap-2 bg-[var(--quizito-electric-blue)]/10 text-[var(--quizito-electric-blue)] px-4 py-2 rounded-full font-medium mb-6">
             <Sparkles className="h-4 w-4" />
             AI Quiz Generator
