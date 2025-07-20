@@ -62,7 +62,7 @@ async function getQuizPageData(quizId: string): Promise<QuizPageResult | null> {
 // NOTE: Leaderboard data is now fetched inside the submitQuiz controller,
 // so this function is no longer needed on this page.
 
-export default async function QuizPage({ params }: { params: { quizId: string } }) {
+export default async function QuizPage({ params }: { params: Promise<{ quizId: string }> }) {
   const { quizId } = await params;
   const quizData = await getQuizPageData(quizId);
 
