@@ -37,7 +37,6 @@ export default function CreatePage() {
   });
   
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -99,13 +98,13 @@ export default function CreatePage() {
     setPdfFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const uploadAndProcessPdfs = async () => {
+  const uploadAndProcessPdfs = async (): Promise<string | null> => {
     if (pdfFiles.length === 0) {
       toast.error('Please upload at least one PDF file');
-      return;
+      return null;
     }
 
-    setIsUploading(true);
+
     setError(null);
 
     try {
@@ -125,32 +124,17 @@ export default function CreatePage() {
       }
 
       const data = await response.json();
-      setFormData(prev => ({
-        ...prev,
-        source_data: data.source_data,
-        source_type: 'pdf',
-      }));
-
-      toast.success(`${pdfFiles.length} PDF${pdfFiles.length > 1 ? 's' : ''} processed successfully!`);
-      return true;
-    } catch (error) {
+      toast.success('PDFs processed successfully!');
+      return data.text; // Return the extracted text
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to process PDFs';
       setError(errorMessage);
       toast.error(errorMessage);
-      return false;
-    } finally {
-      setIsUploading(false);
+      return null;
     }
   };
 
-  const handlePdfSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = await uploadAndProcessPdfs();
-    if (success) {
-      // The form submission will be handled by the main form
-      // since we've updated the formData with the extracted text
-    }
-  };
+
 
   const isFormValid = () => {
     if (formData.source_type === 'pdf') {
@@ -504,23 +488,7 @@ export default function CreatePage() {
                               </div>
                             ))}
                           </div>
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              onClick={handlePdfSubmit}
-                              disabled={isUploading || pdfFiles.length === 0}
-                              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-[var(--quizito-electric-blue)] rounded-md hover:bg-[var(--quizito-electric-blue-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {isUploading ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  Processing...
-                                </>
-                              ) : (
-                                'Process PDFs'
-                              )}
-                            </button>
-                          </div>
+
                         </div>
                       )}
                     </div>
