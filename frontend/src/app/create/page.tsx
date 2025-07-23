@@ -35,6 +35,7 @@ export default function CreatePage() {
     question_count: 5,
     is_public: false,
   });
+  
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
