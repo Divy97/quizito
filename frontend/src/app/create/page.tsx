@@ -159,39 +159,79 @@ export default function CreatePage() {
     return formData.title.trim() && formData.source_data.trim();
   };
 
+  const pollForQuizStatus = async (quizId: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/quizzes/${quizId}/status`);
+        if (!response.ok) {
+          // Stop polling on non-2xx responses
+          clearInterval(interval);
+          setError('Failed to get quiz status.');
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.status === 'COMPLETED') {
+          clearInterval(interval);
+          toast.success('Quiz generated successfully!');
+          router.push(`/quiz/${quizId}`);
+        } else if (data.status === 'FAILED') {
+          clearInterval(interval);
+          setError(data.errorMessage || 'Quiz generation failed. Please try again.');
+          toast.error(data.errorMessage || 'Quiz generation failed');
+          setLoading(false);
+        }
+        // If status is 'PENDING', do nothing and let it poll again.
+
+      } catch (error: unknown) {
+        clearInterval(interval);
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while checking quiz status.';
+        setError(errorMessage);
+        setLoading(false);
+      }
+    }, 5000); // Poll every 5 seconds
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // If source is PDF and we have files but haven't processed them yet
-    if (formData.source_type === 'pdf' && pdfFiles.length > 0 && !formData.source_data) {
-      const success = await uploadAndProcessPdfs();
-      if (!success) return; // Don't proceed if PDF processing failed
-    }
-    
     if (!isFormValid()) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/generate`, {
-        method: 'POST',
-        body: JSON.stringify(formData),
-      });
+      const finalFormData = { ...formData };
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate quiz');
+      if (formData.source_type === 'pdf') {
+        const pdfText = await uploadAndProcessPdfs();
+        if (!pdfText) return; // Error is handled in the upload function
+        finalFormData.source_data = pdfText;
       }
 
-      toast.success('Quiz generated successfully!');
-      router.push(`/quiz/${data.quizId}`);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/quizzes/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalFormData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to start quiz generation');
+      }
+
+      const data = await response.json();
+      toast.info('Quiz generation started! You will be redirected when it is ready.');
+      
+      // Start polling for the quiz status
+      pollForQuizStatus(data.quizId);
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.';
+      console.error('Quiz generation error:', error);
       setError(errorMessage);
       toast.error(errorMessage);
-    } finally {
       setLoading(false);
     }
   };
