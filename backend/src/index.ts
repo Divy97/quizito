@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
+import bodyParser from 'body-parser';
 
 import './config/passport.js';
 import authRoutes from './routes/authRoutes.js';
@@ -56,7 +57,7 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 
-app.use(express.json());
+app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 
