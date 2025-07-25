@@ -6,6 +6,7 @@ import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { filterSemanticallyUnique, Question } from '../utils/similarity.js';
 import { QuizRefinementService } from './quizRefinementService.js';
 import { StringOutputParser } from '@langchain/core/output_parsers';
+import { cleanJson } from '../utils/jsonUtils.js';
 
 const embeddingModel = new GoogleGenerativeAIEmbeddings({
   apiKey: process.env.GOOGLE_API_KEY!,
@@ -101,8 +102,8 @@ const generateQuestionsForTaxonomy = async (
   });
 
   try {
-    // Clean the raw string to remove markdown fences
-    const cleanedOutput = rawOutput.replace(/```json\n?|```/g, "").trim();
+    // Clean the raw string using the utility function
+    const cleanedOutput = cleanJson(rawOutput);
 
     // Manually parse the cleaned string
     const parsedJson = await parser.parse(cleanedOutput);
