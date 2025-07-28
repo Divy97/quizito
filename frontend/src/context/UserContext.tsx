@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { fetchWithAuth } from '@/lib/api';
 
 // Define the User type
@@ -27,11 +27,13 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
+        setUser(null);
         setIsLoading(false);
         return;
       }
@@ -43,27 +45,34 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setUser(userData);
       } else {
         setUser(null);
+        localStorage.removeItem('token'); // Clear invalid token
       }
     } catch (error) {
       console.error('Failed to fetch user', error);
       setUser(null);
+      localStorage.removeItem('token'); // Clear invalid token
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchUser();
   }, []);
 
-  const logout = async () => {
+  // Only fetch user on initial load, not on every mount
+  useEffect(() => {
+    if (!hasInitialized) {
+      fetchUser();
+      setHasInitialized(true);
+    }
+  }, [fetchUser, hasInitialized]);
+
+  const logout = useCallback(async () => {
     try {
       localStorage.removeItem('token');
       setUser(null);
+      setHasInitialized(false); // Reset initialization flag
     } catch (error) {
       console.error('Logout failed', error);
     }
-  };
+  }, []);
 
   return (
     <UserContext.Provider value={{ user, isLoading, fetchUser, logout }}>

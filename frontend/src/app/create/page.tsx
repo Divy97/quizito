@@ -146,7 +146,7 @@ export default function CreatePage() {
   const pollForQuizStatus = async (quizId: string) => {
     const interval = setInterval(async () => {
       try {
-        const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/quizzes/${quizId}/status`);
+        const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizId}/status`);
         if (!response.ok) {
           // Stop polling on non-2xx responses
           clearInterval(interval);
@@ -194,7 +194,7 @@ export default function CreatePage() {
         finalFormData.source_data = pdfText;
       }
 
-      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/quizzes/generate`, {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(finalFormData),
