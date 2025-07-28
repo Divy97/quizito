@@ -1,83 +1,150 @@
-backend/node_modules
-backend/dist
-backend/package-lock.json
-backend/package.json
-backend/tsconfig.json
-backend/tsconfig.node.json
-backend/tsconfig.app.json
-backend/tsconfig.spec.json
-backend/tsconfig.base.json
-backend/tsconfig.json
-backend/tsconfig.app.json
-backend/tsconfig.spec.json
-backend/tsconfig.base.json
-backend/tsconfig.json
-backend/tsconfig.app.json
-backend/tsconfig.spec.json
-backend/tsconfig.base.json
-backend/tsconfig.json
-backend/tsconfig.app.json
-backend/tsconfig.spec.json
-backend/.env.*
+# Root .gitignore for Quizito Project
 
-/documents
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-/frontend/node_modules
-/frontend/dist
-/frontend/package-lock.json
-/frontend/package.json
-/frontend/tsconfig.json
-/frontend/tsconfig.node.json
-/frontend/tsconfig.app.json
-/frontend/tsconfig.spec.json
-/frontend/tsconfig.base.json
-/frontend/tsconfig.json
-/frontend/.env.*
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
 
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Build outputs
+dist/
+build/
+.next/
+out/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# testing
-frontend/coverage
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# next.js
-frontend/.next/
-frontend/out/
+# Logs
+logs
+*.log
 
-# production
-frontend/build
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# misc
-frontend/.DS_Store
-frontend/*.pem
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
 
-# debug
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
-frontend/.pnpm-debug.log*
+# nyc test coverage
+.nyc_output
 
-# env files (can opt-in for committing if needed)
-frontend/.env*
+# Dependency directories
+jspm_packages/
 
-# vercel
-frontend/.vercel
+# Optional npm cache directory
+.npm
 
-# typescript
-frontend/*.tsbuildinfo
-frontend/next-env.d.ts
+# Optional eslint cache
+.eslintcache
 
-# local environment variables
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.production.local
-frontend/.env.test.local
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# next.js build output
+.next
+
+# nuxt.js build output
+.nuxt
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Temporary folders
+tmp/
+temp/
+
+# AI and ML model files
+*.bin
+*.model
+*.weights
+*.onnx
+*.tflite
+*.pb
+
+# Large data files
+*.csv
+*.json
+*.xml
+*.zip
+*.tar.gz
+*.rar
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+
+# Certificate files
+*.pem
+*.key
+*.crt
+*.p12
+
+# Documentation build
+docs/build/
+docs/_build/
+
+# Testing
+.nyc_output/
+coverage/
+*.lcov
+
+# Misc
+*.tgz
+*.tar.gz
