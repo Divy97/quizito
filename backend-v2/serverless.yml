@@ -1,0 +1,154 @@
+service: quizito-backend-v2
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-plugin-typescript
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    STAGE: ${self:provider.stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource: 
+            - !GetAtt QuizGenerationQueue.Arn
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:DeleteObject
+          Resource: "arn:aws:s3:::quizito-uploads-${self:provider.stage}/*"
+
+package:
+  patterns:
+    - '!./**'
+    - 'src/**'
+    - 'node_modules/**'
+    - 'package.json'
+    - '.env'
+
+functions:
+  # Auth Service - Handles authentication and user management
+  auth-service:
+    handler: src/functions/auth/handler.handler
+    timeout: 10
+    memorySize: 256
+    events:
+      - httpApi:
+          path: /auth/{proxy+}
+          method: ANY
+    environment:
+      FUNCTION_TYPE: auth
+
+  # Quiz Management Service - Handles CRUD operations for quizzes
+  quiz-management-service:
+    handler: src/functions/quiz-management/handler.handler
+    timeout: 15
+    memorySize: 512
+    events:
+      - httpApi:
+          path: /quizzes/my-quizzes
+          method: GET
+      - httpApi:
+          path: /quizzes/{quizId}
+          method: GET
+      - httpApi:
+          path: /quizzes/submit
+          method: POST
+      - httpApi:
+          path: /quizzes/{quizId}
+          method: DELETE
+    environment:
+      FUNCTION_TYPE: quiz-management
+
+  # File Processing Service - Handles PDF uploads and processing
+  file-processing-service:
+    handler: src/functions/file-processing/handler.handler
+    timeout: 30
+    memorySize: 1024
+    events:
+      - httpApi:
+          path: /api/upload/pdfs
+          method: POST
+    environment:
+      FUNCTION_TYPE: file-processing
+
+  # Quiz Generation Service - Handles quiz generation requests
+  quiz-generation-service:
+    handler: src/functions/quiz-generation/handler.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - httpApi:
+          path: /quizzes/generate
+          method: POST
+    environment:
+      FUNCTION_TYPE: quiz-generation
+
+  # Quiz Generation Worker - Processes async quiz generation
+  quiz-generation-worker:
+    handler: src/functions/quiz-generation-worker/handler.handler
+    timeout: 300
+    memorySize: 1024
+    events:
+      - sqs:
+          arn: !GetAtt QuizGenerationQueue.Arn
+          batchSize: 1
+    environment:
+      FUNCTION_TYPE: quiz-generation-worker
+
+resources:
+  Resources:
+    # SQS Queue for quiz generation
+    QuizGenerationQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: quizito-backend-v2-${self:provider.stage}-QuizGenerationQueue
+        VisibilityTimeout: 300
+        MessageRetentionPeriod: 1209600 # 14 days
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt QuizGenerationDLQ.Arn
+          maxReceiveCount: 3
+
+    # Dead Letter Queue for failed messages
+    QuizGenerationDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: quizito-backend-v2-${self:provider.stage}-QuizGenerationDLQ
+        MessageRetentionPeriod: 1209600 # 14 days
+
+    # S3 Bucket for file uploads
+    QuizitoUploadsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: quizito-uploads-${self:provider.stage}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders:
+                - "*"
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+              AllowedOrigins:
+                - "*"
+              MaxAge: 3000
+
+custom:
+  typescript:
+    webpack: false
+    includeModules: false
+    excludeDevDependencies: true 
