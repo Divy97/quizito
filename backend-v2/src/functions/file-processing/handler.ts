@@ -39,7 +39,7 @@ app.get('/health', (_req, res) => {
 });
 
 // POST /api/upload/pdfs - Handle PDF file uploads
-app.post('/api/upload/pdfs', authenticateToken, upload.array('pdfs', 5), async (req, res) => {
+app.post('/upload/pdfs', authenticateToken, upload.array('pdfs', 5), async (req, res) => {
   const userId = req.user?.id;
   logger.info({ userId }, 'PDF upload request received');
 
@@ -113,4 +113,6 @@ app.use('*', (_req, res) => {
   sendError(res, 'Route not found', 404);
 });
 
-export const handler = serverless(app); 
+export const handler = serverless(app, {
+  basePath: '/api'
+}); 

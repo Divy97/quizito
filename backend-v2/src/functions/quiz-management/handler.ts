@@ -23,7 +23,7 @@ app.get('/health', (_req, res) => {
 });
 
 // GET /quizzes/my-quizzes - Get all quizzes for the logged-in user
-app.get('/quizzes/my-quizzes', authenticateToken, async (req, res) => {
+app.get('/my-quizzes', authenticateToken, async (req, res) => {
   const userId = req.user?.id;
   logger.info({ userId }, 'Fetching quizzes for user');
 
@@ -54,7 +54,7 @@ app.get('/quizzes/my-quizzes', authenticateToken, async (req, res) => {
 });
 
 // GET /quizzes/:quizId - Get a single quiz by its ID
-app.get('/quizzes/:quizId', softAuthenticateToken, async (req, res) => {
+app.get('/:quizId', softAuthenticateToken, async (req, res) => {
   const { quizId } = req.params;
   const userId = req.user?.id;
 
@@ -126,7 +126,7 @@ app.get('/quizzes/:quizId', softAuthenticateToken, async (req, res) => {
 });
 
 // POST /quizzes/submit - Submits a quiz for grading
-app.post('/quizzes/submit', softAuthenticateToken, async (req, res) => {
+app.post('/submit', softAuthenticateToken, async (req, res) => {
   const validation = quizSubmissionSchema.safeParse(req.body);
   const userId = req.user?.id;
 
@@ -233,7 +233,7 @@ app.post('/quizzes/submit', softAuthenticateToken, async (req, res) => {
 });
 
 // DELETE /quizzes/:quizId - Deletes a quiz
-app.delete('/quizzes/:quizId', authenticateToken, async (req, res) => {
+app.delete('/:quizId', authenticateToken, async (req, res) => {
   const { quizId } = req.params;
   const userId = req.user?.id;
 
@@ -283,4 +283,6 @@ app.use('*', (_req, res) => {
   sendError(res, 'Route not found', 404);
 });
 
-export const handler = serverless(app); 
+export const handler = serverless(app, {
+  basePath: '/quizzes'
+}); 
