@@ -47,8 +47,17 @@ functions:
     memorySize: 256
     events:
       - httpApi:
-          path: /auth/{proxy+}
-          method: ANY
+          path: /auth/google
+          method: GET
+      - httpApi:
+          path: /auth/google/callback
+          method: GET
+      - httpApi:
+          path: /auth/me
+          method: GET
+      - httpApi:
+          path: /auth/logout
+          method: POST
     environment:
       FUNCTION_TYPE: auth
 
@@ -94,6 +103,9 @@ functions:
       - httpApi:
           path: /quizzes/generate
           method: POST
+      - httpApi:
+          path: /quizzes/{quizId}/status
+          method: GET
     environment:
       FUNCTION_TYPE: quiz-generation
 

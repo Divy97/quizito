@@ -25,7 +25,7 @@ app.get('/health', (_req, res) => {
 });
 
 // Quiz generation endpoint - now handles async processing
-app.post('/quizzes/generate', authenticateToken, async (req, res) => {
+app.post('/generate', authenticateToken, async (req, res) => {
   const userId = req.user?.id;
   logger.info({ userId }, 'Quiz generation request received');
 
@@ -116,7 +116,7 @@ app.post('/quizzes/generate', authenticateToken, async (req, res) => {
 });
 
 // Quiz status endpoint
-app.get('/quizzes/:quizId/status', async (req, res) => {
+app.get('/:quizId/status', async (req, res) => {
   const { quizId } = req.params;
   const userId = req.user?.id;
 
@@ -166,4 +166,6 @@ app.use('*', (_req, res) => {
   sendError(res, 'Route not found', 404);
 });
 
-export const handler = serverless(app); 
+export const handler = serverless(app, {
+  basePath: '/quizzes'
+}); 
