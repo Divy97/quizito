@@ -103,6 +103,10 @@ temp/
 ehthumbs.db
 Thumbs.db
 
+# build 
+build/
+.build/
+
 # Database files
 *.db
 *.sqlite

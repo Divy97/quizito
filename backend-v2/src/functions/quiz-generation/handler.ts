@@ -8,11 +8,11 @@ import { sendSuccess, sendError, sendValidationError } from '../../shared/utils/
 import { createFunctionLogger } from '../../shared/utils/logger.js';
 import { getClient } from '../../shared/utils/database.js';
 import { quizGenerationSchema, QuizGenerationRequest, QuizGenerationResponse } from '../../shared/types/api.js';
-import { SQS } from 'aws-sdk';
+import AWS from 'aws-sdk';
 
 const app = express();
 const logger = createFunctionLogger('quiz-generation-service');
-const sqs = new SQS();
+const sqs = new AWS.SQS();
 
 // Middleware
 app.use(corsMiddleware);
