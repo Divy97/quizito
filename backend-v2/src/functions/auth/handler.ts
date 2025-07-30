@@ -22,6 +22,9 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 
+// Handle preflight requests
+app.options('*', corsMiddleware);
+
 // Health check endpoint
 app.get('/health', (_req, res) => {
   sendSuccess(res, { status: 'healthy', service: 'auth-service' });

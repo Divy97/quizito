@@ -3,7 +3,7 @@
 
 export const config = {
   // Backend API URL (from your deployed backend)
-  API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://h0pi24xwz3.execute-api.us-east-1.amazonaws.com',
+  API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://lle9jayhn6.execute-api.us-east-1.amazonaws.com',
   
   // Frontend URL for CORS (optional)
   FRONTEND_URL: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
