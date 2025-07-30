@@ -6,6 +6,7 @@ const corsOptions = {
     const whitelist = [
       'https://quizito.vercel.app', // staging
       'http://localhost:3000', // local development
+      'http://localhost:3001', // alternative local port
     ];
     
     // Add FRONTEND_URL from .env
@@ -13,6 +14,7 @@ const corsOptions = {
       whitelist.push(process.env.FRONTEND_URL);
     }
     
+    // Allow requests with no origin (like mobile apps or Postman)
     if (!origin) {
       return callback(null, true);
     }
@@ -26,13 +28,15 @@ const corsOptions = {
     if (isAllowed) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin, 'Allowed origins:', whitelist);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie'],
   exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 
 export const corsMiddleware = cors(corsOptions); 

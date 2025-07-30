@@ -17,6 +17,9 @@ app.use(corsMiddleware);
 app.use(bodyParser.json());
 app.use(cookieParser());
 
+// Handle preflight requests
+app.options('*', corsMiddleware);
+
 // Health check endpoint
 app.get('/health', (_req, res) => {
   sendSuccess(res, { status: 'healthy', service: 'quiz-management-service' });
