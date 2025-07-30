@@ -10,9 +10,47 @@ provider:
   runtime: nodejs20.x
   region: us-east-1
   stage: ${opt:stage, 'dev'}
+  # IMPORTANT: No VPC configuration here allows Lambda to access internet
+  # This enables connections to external services like Supabase
   environment:
     NODE_ENV: ${self:provider.stage}
     STAGE: ${self:provider.stage}
+    # Database configuration
+    DATABASE_URL: "${env:DATABASE_URL}"
+    # Authentication
+    JWT_SECRET: "${env:JWT_SECRET}"
+    SESSION_SECRET: "${env:SESSION_SECRET}"
+    # Google OAuth
+    GOOGLE_CLIENT_ID: "${env:GOOGLE_CLIENT_ID}"
+    GOOGLE_CLIENT_SECRET: "${env:GOOGLE_CLIENT_SECRET}"
+    GOOGLE_CALLBACK_URL: "${env:GOOGLE_CALLBACK_URL}"
+    # Frontend URL
+    FRONTEND_URL: "${env:FRONTEND_URL}"
+    # API Keys
+    ANTHROPIC_API_KEY: "${env:ANTHROPIC_API_KEY}"
+    GOOGLE_API_KEY: "${env:GOOGLE_API_KEY}"
+    # Logging
+    LOG_LEVEL: "${env:LOG_LEVEL}"
+  # HTTP API CORS configuration
+  httpApi:
+    cors:
+      allowedOrigins:
+        - 'https://quizito.vercel.app'
+        - 'http://localhost:3000'
+        - ${env:FRONTEND_URL, 'http://localhost:3000'}
+      allowedHeaders:
+        - 'Content-Type'
+        - 'Authorization'
+        - 'X-Requested-With'
+      allowedMethods:
+        - 'GET'
+        - 'POST'
+        - 'PUT'
+        - 'DELETE'
+        - 'OPTIONS'
+      allowCredentials: true
+      exposedResponseHeaders:
+        - 'Set-Cookie'
   iam:
     role:
       statements:
