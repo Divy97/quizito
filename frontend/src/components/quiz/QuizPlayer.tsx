@@ -223,6 +223,13 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.5 }}
               />
+              {isValidating && (
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  animate={{ x: ['-100%', '100%'] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -235,6 +242,22 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
 
           {/* Question Content */}
           <div className="p-8">
+            {/* Loading Status Message */}
+            {isValidating && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 p-4 bg-[var(--quizito-electric-blue)]/10 border border-[var(--quizito-electric-blue)]/20 rounded-xl text-center"
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--quizito-electric-blue)] border-t-transparent"></div>
+                  <span className="text-[var(--quizito-electric-blue)] font-medium">
+                    Checking your answer...
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentQuestion.id}
@@ -268,21 +291,38 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                         buttonClass += " opacity-50";
                       }
 
+                      // Add loading state styling
+                      if (isValidating && isSelected) {
+                        buttonClass = "bg-[var(--quizito-electric-blue)]/20 border-[var(--quizito-electric-blue)] text-[var(--quizito-electric-blue)] shadow-[0_0_20px_rgba(0,212,255,0.3)]";
+                      } else if (isValidating) {
+                        buttonClass += " opacity-30 cursor-not-allowed";
+                      }
+
                       return (
                         <motion.button
                           key={option.id}
                           onClick={() => handleOptionSelect(currentQuestion.id, option.id)}
-                          disabled={!!answerStatus}
-                          whileHover={{ scale: answerStatus ? 1 : 1.02, y: answerStatus ? 0 : -2 }}
+                          disabled={!!answerStatus || isValidating}
+                          whileHover={{ scale: (answerStatus || isValidating) ? 1 : 1.02, y: (answerStatus || isValidating) ? 0 : -2 }}
                           whileTap={{ scale: 0.98 }}
                           className={`w-full p-6 text-left text-lg backdrop-blur-xl rounded-2xl border transition-all duration-300 relative overflow-hidden ${buttonClass}`}
                         >
+                          {/* Loading overlay for selected option */}
+                          {isValidating && isSelected && (
+                            <div className="absolute inset-0 bg-[var(--quizito-electric-blue)]/10 backdrop-blur-sm flex items-center justify-center">
+                              <div className="animate-spin rounded-full h-6 w-6 border-2 border-[var(--quizito-electric-blue)] border-t-transparent"></div>
+                            </div>
+                          )}
+                          
                           <div className="flex items-center gap-4">
                             {answerStatus === 'correct' && isSelected && (
                               <Check className="h-6 w-6 text-[var(--quizito-cyber-green)] flex-shrink-0" />
                             )}
                             {answerStatus === 'incorrect' && isSelected && (
                               <X className="h-6 w-6 text-[var(--quizito-hot-pink)] flex-shrink-0" />
+                            )}
+                            {isValidating && isSelected && (
+                              <div className="animate-spin rounded-full h-6 w-6 border-2 border-[var(--quizito-electric-blue)] border-t-transparent flex-shrink-0"></div>
                             )}
                             <span className="leading-relaxed">{option.option_text}</span>
                           </div>
@@ -424,55 +464,131 @@ function QuizResults({
 
           {/* Results Card */}
           <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10">
-            
             <div className="p-8">
               <h3 className="text-2xl font-bold text-[var(--quizito-text-primary)] mb-6 flex items-center gap-2">
                 <Sparkles className="h-6 w-6 text-[var(--quizito-electric-blue)]" />
                 Detailed Results
               </h3>
-              <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-2">
+              <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
                 {quizData.questions.map((question, index) => {
                   const result = results.results.find(r => r.questionId === question.id);
                   if (!result) return null;
                   
                   return (
-                    <div key={question.id} className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-6">
-                      <h4 className="font-semibold text-[var(--quizito-text-primary)] mb-4 text-lg">
-                        Question {index + 1}: {question.question}
-                      </h4>
-                      <div className="space-y-3">
+                    <motion.div 
+                      key={question.id} 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-gradient-to-br from-[var(--quizito-glass-surface)] to-transparent backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-6 hover:border-[var(--quizito-electric-blue)]/30 transition-all duration-300"
+                    >
+                      {/* Question Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            result.isCorrect 
+                              ? 'bg-[var(--quizito-cyber-green)]/20 text-[var(--quizito-cyber-green)] border border-[var(--quizito-cyber-green)]/30' 
+                              : 'bg-[var(--quizito-hot-pink)]/20 text-[var(--quizito-hot-pink)] border border-[var(--quizito-hot-pink)]/30'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <h4 className="font-semibold text-[var(--quizito-text-primary)] text-lg leading-relaxed">
+                            {question.question}
+                          </h4>
+                        </div>
+                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold ${
+                          result.isCorrect 
+                            ? 'bg-[var(--quizito-cyber-green)]/20 text-[var(--quizito-cyber-green)] border border-[var(--quizito-cyber-green)]/30' 
+                            : 'bg-[var(--quizito-hot-pink)]/20 text-[var(--quizito-hot-pink)] border border-[var(--quizito-hot-pink)]/30'
+                        }`}>
+                          {result.isCorrect ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Correct
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-4 w-4" />
+                              Incorrect
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Options */}
+                      <div className="space-y-3 mb-4">
                         {question.options.map(option => {
                           const isSelected = result.selectedOptionId === option.id;
                           const isCorrect = result.correctOptionId === option.id;
                           
-                          let bgClass = 'bg-[var(--quizito-glass-surface)] border-[var(--quizito-glass-border)]';
-                          if (isSelected && !isCorrect) bgClass = 'bg-[var(--quizito-hot-pink)]/20 border-[var(--quizito-hot-pink)]';
-                          if (isCorrect) bgClass = 'bg-[var(--quizito-cyber-green)]/20 border-[var(--quizito-cyber-green)]';
+                          let optionClass = 'bg-[var(--quizito-glass-surface)] border-[var(--quizito-glass-border)] text-[var(--quizito-text-secondary)]';
+                          let iconClass = 'text-[var(--quizito-text-muted)]';
+                          
+                          if (isCorrect) {
+                            optionClass = 'bg-[var(--quizito-cyber-green)]/20 border-[var(--quizito-cyber-green)] text-[var(--quizito-cyber-green)] shadow-[0_0_10px_rgba(0,255,136,0.2)]';
+                            iconClass = 'text-[var(--quizito-cyber-green)]';
+                          } else if (isSelected && !isCorrect) {
+                            optionClass = 'bg-[var(--quizito-hot-pink)]/20 border-[var(--quizito-hot-pink)] text-[var(--quizito-hot-pink)] shadow-[0_0_10px_rgba(255,0,110,0.2)]';
+                            iconClass = 'text-[var(--quizito-hot-pink)]';
+                          }
 
                           return (
-                            <div key={option.id} className={`flex items-center gap-3 p-4 rounded-xl border backdrop-blur-xl ${bgClass}`}>
-                              {isCorrect ? (
-                                <Check className="h-5 w-5 text-[var(--quizito-cyber-green)] flex-shrink-0" />
-                              ) : isSelected ? (
-                                <X className="h-5 w-5 text-[var(--quizito-hot-pink)] flex-shrink-0" />
-                              ) : (
-                                <div className="w-5 h-5 flex-shrink-0" />
-                              )}
-                              <span className={`${isCorrect ? 'text-[var(--quizito-cyber-green)]' : isSelected ? 'text-[var(--quizito-hot-pink)]' : 'text-[var(--quizito-text-secondary)]'} leading-relaxed`}>
+                            <motion.div 
+                              key={option.id} 
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.1 + 0.1 }}
+                              className={`flex items-center gap-4 p-4 rounded-xl border backdrop-blur-xl transition-all duration-300 ${optionClass}`}
+                            >
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${iconClass}`}>
+                                {isCorrect ? (
+                                  <Check className="h-4 w-4" />
+                                ) : isSelected ? (
+                                  <X className="h-4 w-4" />
+                                ) : (
+                                  <div className="w-2 h-2 rounded-full bg-current opacity-50" />
+                                )}
+                              </div>
+                              <span className="leading-relaxed font-medium">
                                 {option.option_text}
                               </span>
-                            </div>
+                              {isSelected && (
+                                <div className="ml-auto text-xs font-medium opacity-70">
+                                  Your Answer
+                                </div>
+                              )}
+                              {isCorrect && !isSelected && (
+                                <div className="ml-auto text-xs font-medium opacity-70">
+                                  Correct Answer
+                                </div>
+                              )}
+                            </motion.div>
                           );
                         })}
                       </div>
-                      {!result.isCorrect && result.explanation && (
-                        <div className="mt-4 p-4 rounded-xl bg-[var(--quizito-glass-surface)] border border-[var(--quizito-glass-border)]">
-                          <p className="text-[var(--quizito-text-secondary)]">
-                            <span className="font-bold text-[var(--quizito-text-primary)]">Explanation:</span> {result.explanation}
-                          </p>
-                        </div>
+
+                      {/* Explanation */}
+                      {result.explanation && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 + 0.2 }}
+                          className="mt-4 p-4 rounded-xl bg-gradient-to-r from-[var(--quizito-electric-blue)]/10 to-[var(--quizito-neon-purple)]/10 border border-[var(--quizito-electric-blue)]/20"
+                        >
+                          <div className="flex items-start gap-3">
+                            <Brain className="h-5 w-5 text-[var(--quizito-electric-blue)] flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-semibold text-[var(--quizito-text-primary)] mb-1">
+                                Explanation
+                              </p>
+                              <p className="text-[var(--quizito-text-secondary)] leading-relaxed">
+                                {result.explanation}
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
                       )}
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
