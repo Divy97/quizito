@@ -83,6 +83,26 @@ app.get('/:quizId', softAuthenticateToken, async (req, res) => {
       const quiz = quizResult.rows[0];
       const isOwner = userId === quiz.user_id;
 
+      // Check if quiz is still being processed
+      if (quiz.status === 'PENDING' || quiz.status === 'PROCESSING') {
+        if (isOwner) {
+          sendError(res, 'Quiz is still being generated. Please wait a moment and try again.', 202);
+        } else {
+          sendError(res, 'This quiz is not available yet.', 404);
+        }
+        return;
+      }
+
+      // Check if quiz generation failed
+      if (quiz.status === 'FAILED') {
+        if (isOwner) {
+          sendError(res, `Quiz generation failed: ${quiz.error_message || 'Unknown error'}`, 500);
+        } else {
+          sendError(res, 'This quiz is not available.', 404);
+        }
+        return;
+      }
+
       if (!quiz.is_public && !isOwner) {
         sendError(res, 'You do not have permission to view this quiz', 403);
         return;
