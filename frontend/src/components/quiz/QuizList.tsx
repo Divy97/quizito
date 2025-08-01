@@ -108,45 +108,56 @@ export function QuizList({ quizzes: initialQuizzes }: QuizListProps) {
                 <span className="font-medium">{quiz.question_count} Questions</span>
               </div>
 
-              {/* Quiz Attempts */}
-              <Collapsible>
-                <CollapsibleTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full justify-between text-[var(--quizito-text-secondary)] hover:text-[var(--quizito-electric-blue)] hover:bg-[var(--quizito-electric-blue)]/10 transition-all duration-200"
-                  >
-                    <div className="flex items-center gap-2">
-                      <BarChart2 className="h-4 w-4" />
-                      <span>Attempts ({quiz.quiz_attempts.length})</span>
-                    </div>
-                    <ChevronsUpDown className="h-4 w-4" />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-3 space-y-2">
-                  {quiz.quiz_attempts.length > 0 ? (
-                    quiz.quiz_attempts.map((attempt) => (
-                      <div 
-                        key={attempt.id} 
-                        className="flex justify-between items-center p-3 rounded-xl bg-[var(--quizito-glass-surface)] border border-[var(--quizito-glass-border)]"
-                      >
-                        <span className="font-semibold text-[var(--quizito-cyber-green)]">
-                          {attempt.score}%
-                        </span>
-                        <span className="text-[var(--quizito-text-muted)] text-sm">
-                          {formatDistanceToNow(new Date(attempt.submitted_at!), { addSuffix: true })}
-                        </span>
+              {/* Quiz Attempts - Different display for public vs private quizzes */}
+              {quiz.is_public ? (
+                // For public quizzes, show total attempts count
+                <div className="flex items-center gap-2 text-[var(--quizito-text-secondary)] mb-4">
+                  <BarChart2 className="h-4 w-4 text-[var(--quizito-neon-purple)]" />
+                  <span className="font-medium">
+                    {quiz.total_attempts || 0} people took this quiz
+                  </span>
+                </div>
+              ) : (
+                // For private quizzes, show individual attempts
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full justify-between text-[var(--quizito-text-secondary)] hover:text-[var(--quizito-electric-blue)] hover:bg-[var(--quizito-electric-blue)]/10 transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-2">
+                        <BarChart2 className="h-4 w-4" />
+                        <span>Attempts ({quiz.quiz_attempts.length})</span>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-4">
-                      <p className="text-[var(--quizito-text-muted)] text-sm">
-                        No attempts yet
-                      </p>
-                    </div>
-                  )}
-                </CollapsibleContent>
-              </Collapsible>
+                      <ChevronsUpDown className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-3 space-y-2">
+                    {quiz.quiz_attempts.length > 0 ? (
+                      quiz.quiz_attempts.map((attempt) => (
+                        <div 
+                          key={attempt.id} 
+                          className="flex justify-between items-center p-3 rounded-xl bg-[var(--quizito-glass-surface)] border border-[var(--quizito-glass-border)]"
+                        >
+                          <span className="font-semibold text-[var(--quizito-cyber-green)]">
+                            {attempt.score}%
+                          </span>
+                          <span className="text-[var(--quizito-text-muted)] text-sm">
+                            {formatDistanceToNow(new Date(attempt.submitted_at!), { addSuffix: true })}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-[var(--quizito-text-muted)] text-sm">
+                          No attempts yet
+                        </p>
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
             </div>
 
             {/* Card Footer */}
@@ -185,12 +196,23 @@ export function QuizList({ quizzes: initialQuizzes }: QuizListProps) {
                 </AlertDialogContent>
               </AlertDialog>
 
-              <Button asChild size="sm" className="bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:shadow-[0_0_20px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300">
-                <Link href={`/quiz/${quiz.id}`}>
-                  <Play className="h-4 w-4 mr-2" />
-                  Start Quiz
-                </Link>
-              </Button>
+              {quiz.is_public ? (
+                // For public quizzes, show "See Results" button
+                <Button asChild size="sm" className="bg-gradient-to-r from-[var(--quizito-neon-purple)] to-[var(--quizito-cyber-green)] text-white font-semibold px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:shadow-[0_0_20px_rgba(139,92,246,0.6)] hover:scale-105 transition-all duration-300">
+                  <Link href={`/quiz/${quiz.id}`}>
+                    <BarChart2 className="h-4 w-4 mr-2" />
+                    See Results
+                  </Link>
+                </Button>
+              ) : (
+                // For private quizzes, show "Start Quiz" button
+                <Button asChild size="sm" className="bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:shadow-[0_0_20px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300">
+                  <Link href={`/quiz/${quiz.id}`}>
+                    <Play className="h-4 w-4 mr-2" />
+                    Start Quiz
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </motion.div>

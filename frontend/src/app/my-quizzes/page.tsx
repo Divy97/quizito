@@ -17,6 +17,8 @@ export type MyQuiz = {
   description: string | null;
   question_count: number;
   created_at: string;
+  is_public: boolean;
+  total_attempts?: number; // For public quizzes, total number of people who took it
   quiz_attempts: Array<{
     id: string;
     score: number;
