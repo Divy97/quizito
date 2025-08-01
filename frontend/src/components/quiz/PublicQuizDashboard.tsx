@@ -5,8 +5,9 @@ import { PageTitle, BodyText } from '@/components/ui/typography';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Copy, Check, Trophy } from 'lucide-react';
+import { Copy, Check, Trophy, RefreshCw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { fetchWithAuth } from '@/lib/api';
 
 // This is a placeholder for the full quiz data type
 type QuizData = {
@@ -30,10 +31,13 @@ interface PublicQuizDashboardProps {
 export function PublicQuizDashboard({ quizData, leaderboard }: PublicQuizDashboardProps) {
   const [copied, setCopied] = useState(false);
   const [sharableLink, setSharableLink] = useState('');
+  const [currentLeaderboard, setCurrentLeaderboard] = useState<LeaderboardEntry[]>(leaderboard);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     setSharableLink(`${window.location.origin}/quiz/${quizData.id}`);
-  }, [quizData.id]);
+    setCurrentLeaderboard(leaderboard);
+  }, [quizData.id, leaderboard]);
 
   const handleCopy = () => {
     if (!sharableLink) return;
@@ -41,6 +45,25 @@ export function PublicQuizDashboard({ quizData, leaderboard }: PublicQuizDashboa
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
+  };
+
+  const handleRefreshLeaderboard = async () => {
+    setIsRefreshing(true);
+    try {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizData.id}`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentLeaderboard(data.data.leaderboard || []);
+      }
+    } catch (error) {
+      console.error('Error refreshing leaderboard:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   return (
@@ -77,14 +100,27 @@ export function PublicQuizDashboard({ quizData, leaderboard }: PublicQuizDashboa
         {/* Leaderboard Section */}
         <Card className="bg-[#1E1E1E]/95 border-[#2A2A2A] shadow-lg">
           <CardHeader>
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-400" />
-              Leaderboard
-            </h2>
-            <p className="text-sm text-[#A0A0A0]">Top scores from players who have taken your quiz.</p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-400" />
+                  Leaderboard
+                </h2>
+                <p className="text-sm text-[#A0A0A0]">Top scores from players who have taken your quiz.</p>
+              </div>
+              <Button
+                onClick={handleRefreshLeaderboard}
+                disabled={isRefreshing}
+                variant="outline"
+                className="shrink-0"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            {leaderboard.length > 0 ? (
+            {currentLeaderboard.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow className="border-b-[#3A3A3A]">
@@ -95,7 +131,7 @@ export function PublicQuizDashboard({ quizData, leaderboard }: PublicQuizDashboa
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leaderboard.map((entry, index) => (
+                  {currentLeaderboard.map((entry, index) => (
                     <TableRow key={index} className="border-b-0">
                       <TableCell className="text-center font-bold text-lg">
                         {index === 0 ? '🏆' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
