@@ -64,7 +64,7 @@ export default function MyQuizzesPage() {
           throw new Error('Failed to fetch quizzes');
         }
         const data = await response.json();
-        setQuizzes(data);
+        setQuizzes(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Error fetching user quizzes:', error);
       } finally {
@@ -123,9 +123,9 @@ export default function MyQuizzesPage() {
 
   // Calculate stats
   const totalQuizzes = quizzes.length;
-  const totalAttempts = quizzes.reduce((sum, quiz) => sum + quiz.quiz_attempts.length, 0);
+  const totalAttempts = quizzes.reduce((sum, quiz) => sum + (quiz.quiz_attempts?.length || 0), 0);
   const averageScore = totalAttempts > 0 
-    ? Math.round(quizzes.reduce((sum, quiz) => sum + quiz.quiz_attempts.reduce((scoreSum, attempt) => scoreSum + attempt.score, 0), 0) / totalAttempts)
+    ? Math.round(quizzes.reduce((sum, quiz) => sum + (quiz.quiz_attempts || []).reduce((scoreSum, attempt) => scoreSum + attempt.score, 0), 0) / totalAttempts)
     : 0;
 
   return (
