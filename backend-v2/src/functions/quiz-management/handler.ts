@@ -49,8 +49,9 @@ app.get('/my-quizzes', authenticateToken, async (req, res) => {
     try {
       const result = await client.query(
         `SELECT 
-          q.id, q.title, q.description, q.question_count, q.created_at, q.status,
-          COALESCE(json_agg(json_build_object('id', a.id, 'score', a.score, 'submitted_at', a.submitted_at)) FILTER (WHERE a.id IS NOT NULL), '[]') as quiz_attempts
+          q.id, q.title, q.description, q.question_count, q.created_at, q.status, q.is_public,
+          COALESCE(json_agg(json_build_object('id', a.id, 'score', a.score, 'submitted_at', a.submitted_at)) FILTER (WHERE a.id IS NOT NULL), '[]') as quiz_attempts,
+          COUNT(DISTINCT a.id) as total_attempts
          FROM quizzes q
          LEFT JOIN quiz_attempts a ON q.id = a.quiz_id
          WHERE q.user_id = $1
