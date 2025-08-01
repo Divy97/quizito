@@ -257,13 +257,12 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {currentQuestion.options.map((option) => {
                       const isSelected = selectedAnswers[currentQuestion.id] === option.id;
-                      const isCorrect = currentQuestion.correctOptionId === option.id;
 
                       let buttonClass = "bg-[var(--quizito-glass-surface)] border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] hover:border-[var(--quizito-electric-blue)]/50 hover:bg-[var(--quizito-glass-surface-hover)]";
                       
-                      if (answerStatus && isCorrect) {
+                      if (answerStatus === 'correct' && isSelected) {
                         buttonClass = "bg-[var(--quizito-cyber-green)]/20 border-[var(--quizito-cyber-green)] text-[var(--quizito-cyber-green)] shadow-[0_0_20px_rgba(0,255,136,0.3)]";
-                      } else if (answerStatus && isSelected && !isCorrect) {
+                      } else if (answerStatus === 'incorrect' && isSelected) {
                         buttonClass = "bg-[var(--quizito-hot-pink)]/20 border-[var(--quizito-hot-pink)] text-[var(--quizito-hot-pink)] shadow-[0_0_20px_rgba(255,0,110,0.3)]";
                       } else if (answerStatus) {
                         buttonClass += " opacity-50";
@@ -279,10 +278,10 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                           className={`w-full p-6 text-left text-lg backdrop-blur-xl rounded-2xl border transition-all duration-300 relative overflow-hidden ${buttonClass}`}
                         >
                           <div className="flex items-center gap-4">
-                            {answerStatus && isCorrect && (
+                            {answerStatus === 'correct' && isSelected && (
                               <Check className="h-6 w-6 text-[var(--quizito-cyber-green)] flex-shrink-0" />
                             )}
-                            {answerStatus && isSelected && !isCorrect && (
+                            {answerStatus === 'incorrect' && isSelected && (
                               <X className="h-6 w-6 text-[var(--quizito-hot-pink)] flex-shrink-0" />
                             )}
                             <span className="leading-relaxed">{option.option_text}</span>
