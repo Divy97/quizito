@@ -160,10 +160,9 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
 
       const resultsData = await response.json();
       
-      // Override the server results with our local results for display
+      // Use server results as they contain complete data including explanations for all questions
       const finalResults: QuizResultsType = {
         ...resultsData.data,
-        results: localResults,
         correctAnswers,
         score: finalScore
       };
@@ -472,7 +471,13 @@ function QuizResults({
               <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
                 {quizData.questions.map((question, index) => {
                   const result = results.results.find(r => r.questionId === question.id);
-                  if (!result) return null;
+                  
+                  // Debug logging
+                  console.log(`Question ${index + 1}:`, {
+                    questionId: question.id,
+                    hasResult: !!result,
+                    result: result
+                  });
                   
                   return (
                     <motion.div 
@@ -486,9 +491,11 @@ function QuizResults({
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                            result.isCorrect 
+                            result?.isCorrect 
                               ? 'bg-[var(--quizito-cyber-green)]/20 text-[var(--quizito-cyber-green)] border border-[var(--quizito-cyber-green)]/30' 
-                              : 'bg-[var(--quizito-hot-pink)]/20 text-[var(--quizito-hot-pink)] border border-[var(--quizito-hot-pink)]/30'
+                              : result
+                              ? 'bg-[var(--quizito-hot-pink)]/20 text-[var(--quizito-hot-pink)] border border-[var(--quizito-hot-pink)]/30'
+                              : 'bg-[var(--quizito-text-muted)]/20 text-[var(--quizito-text-muted)] border border-[var(--quizito-text-muted)]/30'
                           }`}>
                             {index + 1}
                           </div>
@@ -496,30 +503,32 @@ function QuizResults({
                             {question.question}
                           </h4>
                         </div>
-                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold ${
-                          result.isCorrect 
-                            ? 'bg-[var(--quizito-cyber-green)]/20 text-[var(--quizito-cyber-green)] border border-[var(--quizito-cyber-green)]/30' 
-                            : 'bg-[var(--quizito-hot-pink)]/20 text-[var(--quizito-hot-pink)] border border-[var(--quizito-hot-pink)]/30'
-                        }`}>
-                          {result.isCorrect ? (
-                            <>
-                              <Check className="h-4 w-4" />
-                              Correct
-                            </>
-                          ) : (
-                            <>
-                              <X className="h-4 w-4" />
-                              Incorrect
-                            </>
-                          )}
-                        </div>
+                        {result && (
+                          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold ${
+                            result.isCorrect 
+                              ? 'bg-[var(--quizito-cyber-green)]/20 text-[var(--quizito-cyber-green)] border border-[var(--quizito-cyber-green)]/30' 
+                              : 'bg-[var(--quizito-hot-pink)]/20 text-[var(--quizito-hot-pink)] border border-[var(--quizito-hot-pink)]/30'
+                          }`}>
+                            {result.isCorrect ? (
+                              <>
+                                <Check className="h-4 w-4" />
+                                Correct
+                              </>
+                            ) : (
+                              <>
+                                <X className="h-4 w-4" />
+                                Incorrect
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Options */}
                       <div className="space-y-3 mb-4">
                         {question.options.map(option => {
-                          const isSelected = result.selectedOptionId === option.id;
-                          const isCorrect = result.correctOptionId === option.id;
+                          const isSelected = result?.selectedOptionId === option.id;
+                          const isCorrect = result?.correctOptionId === option.id;
                           
                           let optionClass = 'bg-[var(--quizito-glass-surface)] border-[var(--quizito-glass-border)] text-[var(--quizito-text-secondary)]';
                           let iconClass = 'text-[var(--quizito-text-muted)]';
@@ -568,7 +577,7 @@ function QuizResults({
                       </div>
 
                       {/* Explanation */}
-                      {result.explanation && (
+                      {result?.explanation && (
                         <motion.div 
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -654,7 +663,7 @@ function QuizResults({
                           return (
                             <TableRow key={index} className={`border-b-0 ${isCurrentUser ? 'bg-[var(--quizito-electric-blue)]/10' : ''}`}>
                               <TableCell className="text-center font-bold text-lg">
-                                {index === 0 ? '🏆' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                                {index === 0 ? '��' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                               </TableCell>
                               <TableCell className={`font-medium ${isCurrentUser ? 'text-[var(--quizito-electric-blue)]' : 'text-[var(--quizito-text-primary)]'}`}>
                                 {entry.nickname}
