@@ -9,6 +9,19 @@ import { createFunctionLogger } from '../../shared/utils/logger.js';
 import { getClient } from '../../shared/utils/database.js';
 import { quizSubmissionSchema } from '../../shared/types/api.js';
 
+// Type definitions for database query results
+interface CorrectOptionRow {
+  question_id: string;
+  explanation: string;
+  correct_option_id: string;
+}
+
+interface LeaderboardRow {
+  nickname: string;
+  score: number;
+  time_taken_seconds: number;
+}
+
 const app = express();
 const logger = createFunctionLogger('quiz-management-service');
 
@@ -150,108 +163,120 @@ app.get('/:quizId', softAuthenticateToken, async (req, res) => {
 
 // POST /quizzes/submit - Submits a quiz for grading
 app.post('/submit', softAuthenticateToken, async (req, res) => {
-  const validation = quizSubmissionSchema.safeParse(req.body);
   const userId = req.user?.id;
-
-  if (!validation.success) {
-    logger.warn({ userId, errors: validation.error.flatten().fieldErrors }, 'Quiz submission validation failed');
-    sendValidationError(res, validation.error.flatten().fieldErrors);
-    return;
-  }
-
-  const { quizId, answers, nickname, timeTaken } = validation.data;
-  logger.info({ userId, quizId, nickname }, 'Quiz submission received');
-
-  const client = await getClient();
+  let quizId: string | undefined;
+  logger.info({ userId, body: req.body, headers: req.headers }, 'Quiz submission request received');
 
   try {
-    // 1. Fetch quiz to check visibility and ownership
-    const quizResult = await client.query('SELECT is_public, user_id FROM quizzes WHERE id = $1', [quizId]);
+    // Handle case where body is still a Buffer
+    let requestBody = req.body;
+    if (Buffer.isBuffer(req.body)) {
+      requestBody = JSON.parse(req.body.toString());
+      logger.info({ userId, parsedBody: requestBody }, 'Parsed Buffer body to JSON');
+    }
 
-    if (quizResult.rows.length === 0) {
-      logger.warn({ userId, quizId }, 'Quiz submission failed: Quiz not found');
-      sendError(res, 'Quiz not found', 404);
+    const validation = quizSubmissionSchema.safeParse(requestBody);
+    if (!validation.success) {
+      logger.warn({ userId, errors: validation.error.flatten().fieldErrors }, 'Quiz submission validation failed');
+      sendValidationError(res, validation.error.flatten().fieldErrors);
       return;
     }
 
-    const quiz = quizResult.rows[0];
-    const isOwner = userId === quiz.user_id;
+    const { quizId: validatedQuizId, answers, nickname, timeTaken } = validation.data;
+    quizId = validatedQuizId;
+    logger.info({ userId, quizId, nickname }, 'Quiz submission received');
 
-    // Security Check: Block submission to private quizzes by non-owners
-    if (!quiz.is_public && !isOwner) {
-      logger.warn({ userId, quizId }, 'Quiz submission failed: Attempted to submit to a private quiz without ownership');
-      sendError(res, 'You do not have permission to submit to this quiz', 403);
-      return;
-    }
+    const client = await getClient();
 
-    // Validation: Nickname is required for public, non-owner submissions
-    if (quiz.is_public && !isOwner && !nickname) {
-      logger.warn({ userId, quizId }, 'Quiz submission failed: Nickname is required for public quizzes');
-      sendError(res, 'Nickname is required for public quizzes', 400);
-      return;
-    }
+    try {
+      // 1. Fetch quiz to check visibility and ownership
+      const quizResult = await client.query('SELECT is_public, user_id FROM quizzes WHERE id = $1', [quizId]);
 
-    // 2. Grade the quiz
-    const questionIds = Object.keys(answers);
-    const correctOptionsQuery = await client.query(
-      `SELECT q.id AS question_id, q.explanation, o.id AS correct_option_id
-       FROM questions q
-       JOIN question_options o ON q.id = o.question_id
-       WHERE q.quiz_id = $1 AND q.id = ANY($2::uuid[]) AND o.is_correct = TRUE`,
-      [quizId, questionIds]
-    );
+      if (quizResult.rows.length === 0) {
+        logger.warn({ userId, quizId }, 'Quiz submission failed: Quiz not found');
+        sendError(res, 'Quiz not found', 404);
+        return;
+      }
 
-    const correctOptionsMap = new Map(correctOptionsQuery.rows.map(row => [row.question_id, { correctOptionId: row.correct_option_id, explanation: row.explanation }]));
+      const quiz = quizResult.rows[0];
+      const isOwner = userId === quiz.user_id;
 
-    let score = 0;
-    const results = questionIds.map(questionId => {
-      const selectedOptionId = answers[questionId];
-      const correctInfo = correctOptionsMap.get(questionId);
-      const isCorrect = correctInfo?.correctOptionId === selectedOptionId;
-      if (isCorrect) score++;
-      return {
-        questionId,
-        selectedOptionId,
-        correctOptionId: correctInfo?.correctOptionId || '',
-        isCorrect,
-        explanation: correctInfo?.explanation || 'No explanation available.',
-      };
-    });
+      // Security Check: Block submission to private quizzes by non-owners
+      if (!quiz.is_public && !isOwner) {
+        logger.warn({ userId, quizId }, 'Quiz submission failed: Attempted to submit to a private quiz without ownership');
+        sendError(res, 'You do not have permission to submit to this quiz', 403);
+        return;
+      }
 
-    // 3. Save the attempt
-    const finalNickname = isOwner ? (req.user?.username || 'Creator') : nickname!;
-    const finalScore = (score / questionIds.length) * 100;
+      // Validation: Nickname is required for public, non-owner submissions
+      if (quiz.is_public && !isOwner && !nickname) {
+        logger.warn({ userId, quizId }, 'Quiz submission failed: Nickname is required for public quizzes');
+        sendError(res, 'Nickname is required for public quizzes', 400);
+        return;
+      }
 
-    await client.query(
-      `INSERT INTO quiz_attempts (quiz_id, user_id, nickname, score, time_taken_seconds)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [quizId, userId ?? null, finalNickname, Math.round(finalScore), Math.round(timeTaken)]
-    );
-    logger.info({ userId, quizId, score: finalScore }, 'Quiz attempt saved successfully');
-
-    // 4. Fetch leaderboard if public
-    let leaderboard = [];
-    if (quiz.is_public) {
-      const leaderboardResult = await client.query(
-        `SELECT nickname, score, time_taken_seconds FROM quiz_attempts
-         WHERE quiz_id = $1 ORDER BY score DESC, time_taken_seconds ASC LIMIT 10`,
-        [quizId]
+      // 2. Grade the quiz
+      const questionIds = Object.keys(answers);
+      const correctOptionsQuery = await client.query(
+        `SELECT q.id AS question_id, q.explanation, o.id AS correct_option_id
+         FROM questions q
+         JOIN question_options o ON q.id = o.question_id
+         WHERE q.quiz_id = $1 AND q.id = ANY($2::uuid[]) AND o.is_correct = TRUE`,
+        [quizId, questionIds]
       );
-      leaderboard = leaderboardResult.rows;
-    }
 
-    sendSuccess(res, {
-      totalQuestions: questionIds.length,
-      correctAnswers: score,
-      score: finalScore,
-      results,
-      leaderboard,
-    });
+      const correctOptionsMap = new Map((correctOptionsQuery.rows as CorrectOptionRow[]).map((row: CorrectOptionRow) => [row.question_id, { correctOptionId: row.correct_option_id, explanation: row.explanation }]));
+
+      let score = 0;
+      const results = questionIds.map(questionId => {
+        const selectedOptionId = answers[questionId];
+        const correctInfo = correctOptionsMap.get(questionId);
+        const isCorrect = correctInfo?.correctOptionId === selectedOptionId;
+        if (isCorrect) score++;
+        return {
+          questionId,
+          selectedOptionId,
+          correctOptionId: correctInfo?.correctOptionId || '',
+          isCorrect,
+          explanation: correctInfo?.explanation || 'No explanation available.',
+        };
+      });
+
+      // 3. Save the attempt
+      const finalNickname = isOwner ? (req.user?.username || 'Creator') : nickname!;
+      const finalScore = (score / questionIds.length) * 100;
+
+      await client.query(
+        `INSERT INTO quiz_attempts (quiz_id, user_id, nickname, score, time_taken_seconds)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [quizId, userId ?? null, finalNickname, Math.round(finalScore), Math.round(timeTaken)]
+      );
+      logger.info({ userId, quizId, score: finalScore }, 'Quiz attempt saved successfully');
+
+      // 4. Fetch leaderboard if public
+      let leaderboard: LeaderboardRow[] = [];
+      if (quiz.is_public) {
+        const leaderboardResult = await client.query(
+          `SELECT nickname, score, time_taken_seconds FROM quiz_attempts
+           WHERE quiz_id = $1 ORDER BY score DESC, time_taken_seconds ASC LIMIT 10`,
+          [quizId]
+        );
+        leaderboard = leaderboardResult.rows as LeaderboardRow[];
+      }
+
+      sendSuccess(res, {
+        totalQuestions: questionIds.length,
+        correctAnswers: score,
+        score: finalScore,
+        results,
+        leaderboard,
+      });
+    } finally {
+      client.release();
+    }
   } catch (error) {
     logger.error({ userId, quizId, error }, 'Error during quiz submission');
     sendError(res, 'Failed to submit quiz', 500);
-  } finally {
-    client.release();
   }
 });
 
