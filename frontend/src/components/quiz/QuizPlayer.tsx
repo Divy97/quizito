@@ -367,6 +367,27 @@ function QuizResults({
 }) {
   const router = useRouter();
   const isPublicQuiz = quizData.is_public;
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(results.leaderboard);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshLeaderboard = async () => {
+    setIsRefreshing(true);
+    try {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizData.id}`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data.data.leaderboard || []);
+      }
+    } catch (error) {
+      console.error('Error refreshing leaderboard:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center p-6 min-h-[calc(100vh-120px)] relative z-10">
@@ -479,16 +500,28 @@ function QuizResults({
           {isPublicQuiz && (
             <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/5">
               <div className="p-8 border-b border-[var(--quizito-glass-border)]">
-                <h2 className="text-2xl font-bold text-[var(--quizito-text-primary)] flex items-center gap-3">
-                  <Trophy className="h-6 w-6 text-[var(--quizito-electric-yellow)]" />
-                  Leaderboard
-                </h2>
-                <p className="text-[var(--quizito-text-secondary)] mt-2">
-                  See how you rank against other players
-                </p>
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-[var(--quizito-text-primary)] flex items-center gap-3">
+                      <Trophy className="h-6 w-6 text-[var(--quizito-electric-yellow)]" />
+                      Leaderboard
+                    </h2>
+                    <p className="text-[var(--quizito-text-secondary)] mt-2">
+                      See how you rank against other players
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleRefreshLeaderboard}
+                    disabled={isRefreshing}
+                    className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] hover:border-[var(--quizito-electric-blue)]/50 hover:bg-[var(--quizito-glass-surface-hover)] transition-all duration-300"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                  </Button>
+                </div>
               </div>
               <div className="p-8">
-                {results.leaderboard.length > 0 ? (
+                {leaderboard.length > 0 ? (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -500,7 +533,7 @@ function QuizResults({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {results.leaderboard.map((entry, index) => {
+                        {leaderboard.map((entry, index) => {
                           const isCurrentUser = entry.nickname === nickname;
                           return (
                             <TableRow key={index} className={`border-b-0 ${isCurrentUser ? 'bg-[var(--quizito-electric-blue)]/10' : ''}`}>
