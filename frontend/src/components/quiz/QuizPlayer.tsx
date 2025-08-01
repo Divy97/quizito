@@ -299,14 +299,7 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                           whileHover={{ scale: (answerStatus || isValidating) ? 1 : 1.02, y: (answerStatus || isValidating) ? 0 : -2 }}
                           whileTap={{ scale: 0.98 }}
                           className={`w-full p-6 text-left text-lg backdrop-blur-xl rounded-2xl border transition-all duration-300 relative overflow-hidden ${buttonClass}`}
-                        >
-                          {/* Loading overlay for selected option */}
-                          {isValidating && isSelected && (
-                            <div className="absolute inset-0 bg-[var(--quizito-electric-blue)]/10 backdrop-blur-sm flex items-center justify-center">
-                              <div className="animate-spin rounded-full h-6 w-6 border-2 border-[var(--quizito-electric-blue)] border-t-transparent"></div>
-                            </div>
-                          )}
-                          
+                        >                        
                           <div className="flex items-center gap-4">
                             {answerStatus === 'correct' && isSelected && (
                               <Check className="h-6 w-6 text-[var(--quizito-cyber-green)] flex-shrink-0" />
