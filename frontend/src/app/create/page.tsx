@@ -24,6 +24,7 @@ export default function CreatePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pdfProcessing, setPdfProcessing] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -83,14 +84,26 @@ export default function CreatePage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Filter for PDFs only
-    const pdfs = files.filter(file => file.type === 'application/pdf');
-    if (pdfs.length === 0) {
-      toast.error('Please upload PDF files only');
+    // Filter for PDFs only and validate file size
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
+    const validPdfs = files.filter(file => {
+      if (file.type !== 'application/pdf') {
+        toast.error(`${file.name} is not a PDF file`);
+        return false;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name} is too large. Maximum size is 5MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validPdfs.length === 0) {
+      toast.error('Please upload valid PDF files (max 5MB each)');
       return;
     }
 
-    setPdfFiles(prev => [...prev, ...pdfs]);
+    setPdfFiles(prev => [...prev, ...validPdfs]);
     e.target.value = ''; // Reset file input
   };
 
@@ -104,8 +117,8 @@ export default function CreatePage() {
       return null;
     }
 
-
     setError(null);
+    setPdfProcessing(true); // Set processing state
 
     try {
       const formData = new FormData();
@@ -125,12 +138,14 @@ export default function CreatePage() {
 
       const data = await response.json();
       toast.success('PDFs processed successfully!');
-      return data.text; // Return the extracted text
+      return data.data.source_data; // Return the extracted text from source_data
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to process PDFs';
       setError(errorMessage);
       toast.error(errorMessage);
       return null;
+    } finally {
+      setPdfProcessing(false); // Reset processing state
     }
   };
 
@@ -448,19 +463,33 @@ export default function CreatePage() {
                         <label
                           htmlFor="pdf-upload"
                           className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg transition-colors ${
-                            loading 
+                            loading || pdfProcessing
                               ? 'cursor-not-allowed bg-[var(--quizito-bg-secondary)]/50 border-[var(--quizito-border)]/50' 
                               : 'cursor-pointer bg-[var(--quizito-bg-secondary)] border-[var(--quizito-border)] hover:bg-[var(--quizito-bg-tertiary)]'
                           }`}
                         >
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-10 h-10 mb-3 text-[var(--quizito-text-secondary)]" />
-                            <p className="mb-2 text-sm text-[var(--quizito-text-secondary)]">
-                              <span className="font-semibold">Click to upload</span> or drag and drop
-                            </p>
-                            <p className="text-xs text-[var(--quizito-text-tertiary)]">
-                              PDF files only (MAX. 10MB each)
-                            </p>
+                            {pdfProcessing ? (
+                              <>
+                                <Loader2 className="w-10 h-10 mb-3 text-[var(--quizito-electric-blue)] animate-spin" />
+                                <p className="mb-2 text-sm text-[var(--quizito-electric-blue)] font-semibold">
+                                  Processing PDFs...
+                                </p>
+                                <p className="text-xs text-[var(--quizito-text-tertiary)]">
+                                  Please wait while we extract text
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-10 h-10 mb-3 text-[var(--quizito-text-secondary)]" />
+                                <p className="mb-2 text-sm text-[var(--quizito-text-secondary)]">
+                                  <span className="font-semibold">Click to upload</span> or drag and drop
+                                </p>
+                                <p className="text-xs text-[var(--quizito-text-tertiary)]">
+                                  PDF files only (MAX. 5MB each)
+                                </p>
+                              </>
+                            )}
                           </div>
                           <input
                             id="pdf-upload"
@@ -469,7 +498,7 @@ export default function CreatePage() {
                             accept=".pdf"
                             multiple
                             onChange={handlePdfUpload}
-                            disabled={loading}
+                            disabled={loading || pdfProcessing}
                           />
                         </label>
                       </div>
@@ -615,13 +644,22 @@ export default function CreatePage() {
               <motion.div variants={itemVariants}>
                 <Button
                   type="submit"
-                  disabled={!isFormValid() || loading}
+                  disabled={!isFormValid() || loading || pdfProcessing}
                   className="w-full bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white px-8 py-6 text-xl font-bold rounded-2xl shadow-[0_0_30px_rgba(0,212,255,0.4)] hover:shadow-[0_0_40px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center"
                 >
-                  {loading ? (
+                  {loading || pdfProcessing ? (
                     <>
-                      <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                      Generating Magic...
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                          Generating Magic...
+                        </>
+                      ) : (
+                        <>
+                          <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                          Processing PDFs...
+                        </>
+                      )}
                     </>
                   ) : (
                     <>
