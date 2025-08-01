@@ -1,6 +1,5 @@
 import express from 'express';
 import serverless from 'serverless-http';
-import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import { corsMiddleware } from '../../shared/middleware/cors.js';
 import { authenticateToken } from '../../shared/middleware/auth.js';
@@ -16,7 +15,8 @@ const sqs = new AWS.SQS();
 
 // Middleware
 app.use(corsMiddleware);
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Handle preflight requests
@@ -30,11 +30,18 @@ app.get('/health', (_req, res) => {
 // Quiz generation endpoint - now handles async processing
 app.post('/generate', authenticateToken, async (req, res) => {
   const userId = req.user?.id;
-  logger.info({ userId }, 'Quiz generation request received');
+  logger.info({ userId, body: req.body, headers: req.headers }, 'Quiz generation request received');
 
   try {
+    // Handle case where body is still a Buffer
+    let requestBody = req.body;
+    if (Buffer.isBuffer(req.body)) {
+      requestBody = JSON.parse(req.body.toString());
+      logger.info({ userId, parsedBody: requestBody }, 'Parsed Buffer body to JSON');
+    }
+
     // Validate request body
-    const validation = quizGenerationSchema.safeParse(req.body);
+    const validation = quizGenerationSchema.safeParse(requestBody);
     if (!validation.success) {
       logger.warn({ userId, errors: validation.error.flatten().fieldErrors }, 'Quiz generation validation failed');
       sendValidationError(res, validation.error.flatten().fieldErrors);
@@ -119,7 +126,7 @@ app.post('/generate', authenticateToken, async (req, res) => {
 });
 
 // Quiz status endpoint
-app.get('/:quizId/status', async (req, res) => {
+app.get('/:quizId/status', authenticateToken, async (req, res) => {
   const { quizId } = req.params;
   const userId = req.user?.id;
 
@@ -143,6 +150,7 @@ app.get('/:quizId/status', async (req, res) => {
       }
 
       const quiz = result.rows[0];
+      logger.info({ userId, quizId, status: quiz.status }, 'Quiz status fetched');
       sendSuccess(res, {
         status: quiz.status,
         errorMessage: quiz.error_message
