@@ -148,6 +148,16 @@ functions:
       FUNCTION_TYPE: quiz-generation
       QUIZ_GENERATION_QUEUE_URL: !Ref QuizGenerationQueue
       DATABASE_URL: "${env:DATABASE_URL}"
+  
+  # Quiz Validation Service - Handles quiz validation requests
+  quiz-validation-service:
+    handler: src/functions/quiz-management/handler.handler
+    timeout: 15
+    memorySize: 512
+    events:
+      - httpApi:
+          path: /quizzes/{quizId}/validate-answer
+          method: POST
 
   # Quiz Generation Worker - Processes async quiz generation
   quiz-generation-worker:

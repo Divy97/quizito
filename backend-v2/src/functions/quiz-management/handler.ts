@@ -124,8 +124,7 @@ app.get('/:quizId', softAuthenticateToken, async (req, res) => {
       // Now, fetch the questions and options for this quiz
       const questionsResult = await client.query(
         `SELECT q.id, q.question, q.explanation, 
-         COALESCE(json_agg(json_build_object('id', o.id, 'option_text', o.option_text)) FILTER (WHERE o.id IS NOT NULL), '[]') as options,
-         (SELECT o_correct.id FROM question_options o_correct WHERE o_correct.question_id = q.id AND o_correct.is_correct = TRUE LIMIT 1) as "correctOptionId"
+         COALESCE(json_agg(json_build_object('id', o.id, 'option_text', o.option_text)) FILTER (WHERE o.id IS NOT NULL), '[]') as options
          FROM questions q
          LEFT JOIN question_options o ON q.id = o.question_id
          WHERE q.quiz_id = $1
@@ -158,6 +157,85 @@ app.get('/:quizId', softAuthenticateToken, async (req, res) => {
   } catch (error) {
     logger.error({ userId, quizId, error }, 'Error fetching quiz by ID');
     sendError(res, 'Failed to fetch quiz', 500);
+  }
+});
+
+// POST /quizzes/:quizId/validate-answer - Validates a single answer
+app.post('/:quizId/validate-answer', softAuthenticateToken, async (req, res) => {
+  const { quizId } = req.params;
+  const userId = req.user?.id;
+  let requestBody: any;
+  let questionId: string | undefined;
+x
+  try {
+    // Handle case where body is still a Buffer
+    if (Buffer.isBuffer(req.body)) {
+      requestBody = JSON.parse(req.body.toString());
+    } else {
+      requestBody = req.body;
+    }
+
+    const { questionId: validatedQuestionId, selectedOptionId } = requestBody;
+    questionId = validatedQuestionId;
+
+    if (!questionId || !selectedOptionId) {
+      sendError(res, 'Question ID and selected option ID are required', 400);
+      return;
+    }
+
+    logger.info({ userId, quizId, questionId, selectedOptionId }, 'Answer validation request received');
+
+    const client = await getClient();
+
+    try {
+      // 1. Verify the quiz exists and user has access
+      const quizResult = await client.query('SELECT is_public, user_id FROM quizzes WHERE id = $1', [quizId]);
+      
+      if (quizResult.rows.length === 0) {
+        sendError(res, 'Quiz not found', 404);
+        return;
+      }
+
+      const quiz = quizResult.rows[0];
+      const isOwner = userId === quiz.user_id;
+
+      if (!quiz.is_public && !isOwner) {
+        sendError(res, 'You do not have permission to access this quiz', 403);
+        return;
+      }
+
+      // 2. Get the correct answer for this question
+      const correctAnswerQuery = await client.query(
+        `SELECT q.explanation, o.id as correct_option_id
+         FROM questions q
+         JOIN question_options o ON q.id = o.question_id
+         WHERE q.quiz_id = $1 AND q.id = $2 AND o.is_correct = TRUE`,
+        [quizId, questionId]
+      );
+
+      if (correctAnswerQuery.rows.length === 0) {
+        sendError(res, 'Question not found', 404);
+        return;
+      }
+
+      const correctAnswer = correctAnswerQuery.rows[0];
+      const isCorrect = correctAnswer.correct_option_id === selectedOptionId;
+
+      // 3. Return validation result
+      const response = {
+        isCorrect,
+        explanation: isCorrect ? null : correctAnswer.explanation
+      };
+
+      sendSuccess(res, response);
+
+    } finally {
+      client.release();
+    }
+
+  } catch (error) {
+    logger.error({ userId, quizId, questionId, error }, 'Error validating answer');
+    sendError(res, 'Failed to validate answer', 500);
   }
 });
 
