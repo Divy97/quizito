@@ -20,7 +20,6 @@ export type ClientQuestion = {
   id: string;
   question: string;
   options: QuestionOption[];
-  correctOptionId: string;
 };
 
 type LeaderboardEntry = {

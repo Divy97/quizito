@@ -54,6 +54,8 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
   const [startTime, setStartTime] = useState(0);
   const [answerStatus, setAnswerStatus] = useState<'correct' | 'incorrect' | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
+  const [localResults, setLocalResults] = useState<QuestionResult[]>([]);
+  const [isValidating, setIsValidating] = useState(false);
 
   const totalQuestions = quizData.questions.length;
   const currentQuestion = quizData.questions[currentQuestionIndex];
@@ -76,21 +78,58 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
     setStartTime(Date.now());
   };
 
-  const handleOptionSelect = (questionId: string, optionId: string) => {
-    if (answerStatus) return;
+  const handleOptionSelect = async (questionId: string, optionId: string) => {
+    if (answerStatus || isValidating) return;
 
-    const isCorrect = optionId === currentQuestion.correctOptionId;
-    setAnswerStatus(isCorrect ? 'correct' : 'incorrect');
+    setIsValidating(true);
     const newAnswers = { ...selectedAnswers, [questionId]: optionId };
     setSelectedAnswers(newAnswers);
 
-    setTimeout(() => {
-      if (currentQuestionIndex < totalQuestions - 1) {
-        setCurrentQuestionIndex(prev => prev + 1);
-      } else {
-        handleFinishQuiz(newAnswers);
+    try {
+      // Call the validation endpoint
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizData.id}/validate-answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionId,
+          selectedOptionId: optionId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to validate answer');
       }
-    }, 1500);
+
+      const validationResult = await response.json();
+      const isCorrect = validationResult.data.isCorrect;
+      
+      setAnswerStatus(isCorrect ? 'correct' : 'incorrect');
+
+      // Store the result locally
+      const questionResult: QuestionResult = {
+        questionId,
+        selectedOptionId: optionId,
+        correctOptionId: '', // We don't know the correct answer
+        isCorrect,
+        explanation: validationResult.data.explanation
+      };
+
+      setLocalResults(prev => [...prev, questionResult]);
+
+      setTimeout(() => {
+        if (currentQuestionIndex < totalQuestions - 1) {
+          setCurrentQuestionIndex(prev => prev + 1);
+        } else {
+          handleFinishQuiz(newAnswers);
+        }
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error validating answer:', error);
+      setAnswerStatus('incorrect');
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   useEffect(() => {
@@ -100,6 +139,10 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
   const handleFinishQuiz = async (finalAnswers: Record<string, string>) => {
     setQuizState('submitting');
     const timeTaken = Math.round((Date.now() - startTime) / 1000);
+
+    // Calculate score from local results
+    const correctAnswers = localResults.filter(result => result.isCorrect).length;
+    const finalScore = (correctAnswers / totalQuestions) * 100;
 
     try {
       const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/submit`, {
@@ -116,7 +159,16 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
       if (!response.ok) throw new Error('Failed to submit quiz.');
 
       const resultsData = await response.json();
-      setResults(resultsData);
+      
+      // Override the server results with our local results for display
+      const finalResults: QuizResultsType = {
+        ...resultsData.data,
+        results: localResults,
+        correctAnswers,
+        score: finalScore
+      };
+      
+      setResults(finalResults);
       setQuizState('finished');
     } catch (error) {
       console.error(error);
