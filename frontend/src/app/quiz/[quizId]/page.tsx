@@ -1,3 +1,5 @@
+"use client";
+
 import { notFound } from 'next/navigation';
 import { AppLayout } from '@/components/ui/app-layout';
 import { QuizPlayer } from '@/components/quiz/QuizPlayer';
@@ -5,6 +7,8 @@ import { PublicQuizDashboard } from '@/components/quiz/PublicQuizDashboard';
 import { PageTitle, MutedText } from '@/components/ui/typography';
 import { Lock } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/api';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 
 // Define the types that match our backend API response
 type QuestionOption = {
@@ -62,9 +66,46 @@ async function getQuizPageData(quizId: string): Promise<QuizPageResult | null | 
   }
 }
 
-export default async function QuizPage({params}: {params: Promise<{ quizId: string }>}) {
-  const { quizId } = await params;
-  const quizData = await getQuizPageData(quizId);
+export default function QuizPage() {
+  const params = useParams();
+  const quizId = params.quizId as string;
+  const [quizData, setQuizData] = useState<QuizPageResult | null | 'PROCESSING' | 'LOADING'>('LOADING');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchQuizData = async () => {
+      try {
+        const data = await getQuizPageData(quizId);
+        setQuizData(data);
+      } catch (err) {
+        console.error('Error fetching quiz data:', err);
+        setError('Failed to load quiz');
+        setQuizData(null);
+      }
+    };
+
+    if (quizId) {
+      fetchQuizData();
+    }
+  }, [quizId]);
+
+  // Loading state
+  if (quizData === 'LOADING') {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center text-center p-4 min-h-[calc(100vh-120px)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--quizito-electric-blue)] mb-4"></div>
+          <PageTitle>Loading Quiz...</PageTitle>
+          <MutedText>Please wait while we load your quiz.</MutedText>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Error state
+  if (error || quizData === null) {
+    notFound();
+  }
 
   if (quizData === 'PROCESSING') {
     return (
@@ -76,10 +117,6 @@ export default async function QuizPage({params}: {params: Promise<{ quizId: stri
         </div>
       </AppLayout>
     );
-  }
-
-  if (!quizData) {
-    notFound();
   }
   
   // Logic to show a simple "access denied" for non-owners of private quizzes
