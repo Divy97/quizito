@@ -35,6 +35,11 @@ type QuizPageResult = {
   leaderboard: LeaderboardEntry[];
 };
 
+type QuizPageProps = {
+  params: { quizId: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
 async function getQuizPageData(quizId: string): Promise<QuizPageResult | null> {
   try {
     const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizId}`, {
@@ -59,7 +64,7 @@ async function getQuizPageData(quizId: string): Promise<QuizPageResult | null> {
 }
 
 
-export default async function QuizPage({ params }: { params: { quizId: string } }) {
+export default async function QuizPage({ params }: QuizPageProps) {
   const quizData = await getQuizPageData(params.quizId);
 
   if (!quizData) {
