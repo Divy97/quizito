@@ -29,7 +29,8 @@ interface QuestionsPayload {
 export class QuizPersistenceService {
   static async saveGeneratedQuiz(
     quizData: QuizData,
-    questionsPayload: QuestionsPayload
+    questionsPayload: QuestionsPayload,
+    existingQuizId: string
   ): Promise<string> {
     const {
       user_id,
@@ -43,20 +44,26 @@ export class QuizPersistenceService {
     } = quizData;
     const { questions } = questionsPayload;
 
-    console.log({ userId: user_id, quizTitle: title }, 'Starting database transaction to save quiz.');
+    console.log({ userId: user_id, quizTitle: title, existingQuizId }, 'Starting database transaction to update existing quiz.');
     const client = await pool.connect();
 
     try {
       await client.query('BEGIN');
 
-      // Create the quiz
-      const quizInsertResult = await client.query(
-        `INSERT INTO quizzes (user_id, title, description, source_type, source_data, difficulty, question_count, is_public)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      // Update the existing quiz record instead of creating a new one
+      const quizUpdateResult = await client.query(
+        `UPDATE quizzes 
+         SET title = $1, description = $2, source_type = $3, source_data = $4, difficulty = $5, question_count = $6, is_public = $7
+         WHERE id = $8
          RETURNING id`,
-        [user_id, title, description, source_type, source_data, difficulty, question_count, is_public]
+        [title, description, source_type, source_data, difficulty, question_count, is_public, existingQuizId]
       );
-      const quizId = quizInsertResult.rows[0].id;
+      
+      if (quizUpdateResult.rows.length === 0) {
+        throw new Error(`Quiz with ID ${existingQuizId} not found`);
+      }
+      
+      const quizId = quizUpdateResult.rows[0].id;
 
       // Add questions and options
       for (const question of questions) {
@@ -79,7 +86,7 @@ export class QuizPersistenceService {
       }
 
       await client.query('COMMIT');
-      console.log({ userId: user_id, quizId }, 'Quiz generated and saved successfully.');
+      console.log({ userId: user_id, quizId }, 'Quiz updated and questions added successfully.');
 
       return quizId;
 
