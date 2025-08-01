@@ -663,7 +663,7 @@ function QuizResults({
                           return (
                             <TableRow key={index} className={`border-b-0 ${isCurrentUser ? 'bg-[var(--quizito-electric-blue)]/10' : ''}`}>
                               <TableCell className="text-center font-bold text-lg">
-                                {index === 0 ? '��' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                                {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                               </TableCell>
                               <TableCell className={`font-medium ${isCurrentUser ? 'text-[var(--quizito-electric-blue)]' : 'text-[var(--quizito-text-primary)]'}`}>
                                 {entry.nickname}
