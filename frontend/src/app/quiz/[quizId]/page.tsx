@@ -51,7 +51,8 @@ async function getQuizPageData(quizId: string): Promise<QuizPageResult | null> {
       return null;
     }
 
-    return response.json();
+    const result = await response.json();
+    return result.data;
   } catch (error) {
     console.error(`Exception while fetching quiz data for ID: ${quizId}`, error);
     return null;
