@@ -222,13 +222,7 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.5 }}
               />
-              {isValidating && (
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                  animate={{ x: ['-100%', '100%'] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                />
-              )}
+             
             </div>
           </div>
         </div>
@@ -320,9 +314,7 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                             {answerStatus === 'incorrect' && isSelected && (
                               <X className="h-6 w-6 text-[var(--quizito-hot-pink)] flex-shrink-0" />
                             )}
-                            {isValidating && isSelected && (
-                              <div className="animate-spin rounded-full h-6 w-6 border-2 border-[var(--quizito-electric-blue)] border-t-transparent flex-shrink-0"></div>
-                            )}
+                          
                             <span className="leading-relaxed">{option.option_text}</span>
                           </div>
                         </motion.button>
