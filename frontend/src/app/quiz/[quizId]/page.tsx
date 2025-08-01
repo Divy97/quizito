@@ -36,27 +36,31 @@ type QuizPageResult = {
 };
 
 async function getQuizPageData(quizId: string): Promise<QuizPageResult | null> {
-  const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizId}`, {
-    method: 'GET',
-  });
+  try {
+    const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizId}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
 
-  if (!response.ok) {
     if (response.status === 404) {
       return null;
     }
-    // For other errors, we might want to throw or handle differently
-    throw new Error('Failed to fetch quiz data');
-  }
+    if (!response.ok) {
+      // Log the error for server-side debugging
+      console.error(`Failed to fetch quiz data for ID: ${quizId}, status: ${response.status}`);
+      return null;
+    }
 
-  return response.json();
+    return response.json();
+  } catch (error) {
+    console.error(`Exception while fetching quiz data for ID: ${quizId}`, error);
+    return null;
+  }
 }
 
-// NOTE: Leaderboard data is now fetched inside the submitQuiz controller,
-// so this function is no longer needed on this page.
 
-export default async function QuizPage({ params }: { params: Promise<{ quizId: string }> }) {
-  const { quizId } = await params;
-  const quizData = await getQuizPageData(quizId);
+export default async function QuizPage({ params }: { params: { quizId: string } }) {
+  const quizData = await getQuizPageData(params.quizId);
 
   if (!quizData) {
     notFound();
