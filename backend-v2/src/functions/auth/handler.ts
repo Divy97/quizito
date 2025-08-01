@@ -59,7 +59,7 @@ app.get('/auth/google/callback',
       }
 
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-        expiresIn: '1d',
+        expiresIn: '15d',
       });
 
       // Set JWT in a secure, HttpOnly cookie
@@ -69,7 +69,7 @@ app.get('/auth/google/callback',
         httpOnly: true,
         secure: isSecureConnection,
         sameSite: (isSecureConnection ? 'none' : 'lax') as 'lax' | 'strict' | 'none' | undefined,
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
       };
 
       logger.info('Setting cookie with options', cookieOptions);
