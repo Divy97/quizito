@@ -64,7 +64,7 @@ export default function MyQuizzesPage() {
           throw new Error('Failed to fetch quizzes');
         }
         const data = await response.json();
-        setQuizzes(Array.isArray(data) ? data : []);
+        setQuizzes(data && Array.isArray(data.data) ? data.data : []);
       } catch (error) {
         console.error('Error fetching user quizzes:', error);
       } finally {
