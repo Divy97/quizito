@@ -205,11 +205,21 @@ export default function CreatePage() {
         throw new Error(error.error || 'Failed to start quiz generation');
       }
 
-      const data = await response.json();
+      const result = await response.json();
+      console.log('Quiz generation response:', result);
+
+      const quizId = result.data?.quizId;
+      console.log('QuizID:', quizId);
+
+
+      if (!quizId) {
+        throw new Error('Quiz ID was not returned from the server.');
+      }
+      
       toast.info('Quiz generation started! You will be redirected when it is ready.');
       
       // Start polling for the quiz status
-      pollForQuizStatus(data.quizId);
+      pollForQuizStatus(quizId);
 
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.';
