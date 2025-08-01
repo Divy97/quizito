@@ -11,7 +11,8 @@ const logger = createFunctionLogger('quiz-generation-worker');
 export const handler: SQSHandler = async (event: SQSEvent, context: Context) => {
   logger.info('Quiz generation worker started', { 
     messageCount: event.Records.length,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
+    remainingTime: context.getRemainingTimeInMillis()
   });
 
   for (const record of event.Records) {
@@ -25,7 +26,10 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
   const receiptHandle = record.receiptHandle; 
 
   try {
-    logger.info('Processing quiz generation message', { messageId });
+    logger.info('Processing quiz generation message', { 
+      messageId,
+      remainingTime: context.getRemainingTimeInMillis()
+    });
 
     // Parse the message
     const message: QuizGenerationMessage = JSON.parse(record.body);
@@ -64,12 +68,27 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
     // Generate the quiz
     logger.info({ userId, quizId, sourceType: generationRequest.source_type }, 'Starting quiz generation');
     
-    const questionsPayload = await generateQuizFromSource(
-      generationRequest.difficulty,
-      generationRequest.question_count,
-      sourceData,
-      generationRequest.taxonomy_level
-    );
+    let questionsPayload;
+    try {
+      logger.info({ userId, quizId, difficulty: generationRequest.difficulty, questionCount: generationRequest.question_count }, 'Calling generateQuizFromSource');
+      
+      questionsPayload = await generateQuizFromSource(
+        generationRequest.difficulty,
+        generationRequest.question_count,
+        sourceData,
+        generationRequest.taxonomy_level
+      );
+      
+      logger.info({ userId, quizId, questionsCount: questionsPayload?.questions?.length }, 'Quiz generation completed, saving to database');
+    } catch (error) {
+      logger.error('Error in generateQuizFromSource', { 
+        userId, 
+        quizId, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
 
     // Save the generated quiz to the database
     const quizData = {
@@ -83,7 +102,18 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
       is_public: generationRequest.is_public,
     };
 
-    await QuizPersistenceService.saveGeneratedQuiz(quizData, questionsPayload as any);
+    try {
+      await QuizPersistenceService.saveGeneratedQuiz(quizData, questionsPayload as any);
+      logger.info({ userId, quizId }, 'Quiz saved to database successfully');
+    } catch (error) {
+      logger.error('Error saving quiz to database', { 
+        userId, 
+        quizId, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
 
     // Update quiz status to completed
     await updateQuizStatus(quizId, 'COMPLETED');
@@ -91,6 +121,7 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
     logger.info({ userId, quizId }, 'Quiz generation completed successfully');
 
   } catch (error) {
+    console.error('FULL ERROR DETAILS:', error);
     logger.error('Error processing quiz generation message', { 
       messageId, 
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -125,7 +156,7 @@ async function updateQuizStatus(quizId: string, status: 'PROCESSING' | 'COMPLETE
       );
     } else {
       await client.query(
-        'UPDATE quizzes SET status = $1, updated_at = NOW() WHERE id = $3',
+        'UPDATE quizzes SET status = $1, updated_at = NOW() WHERE id = $2',
         [status, quizId]
       );
     }
