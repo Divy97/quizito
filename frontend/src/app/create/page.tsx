@@ -6,21 +6,20 @@ import { useUser } from '@/context/UserContext';
 import { motion, Variants } from 'framer-motion';
 
 import { AppLayout } from '@/components/ui/app-layout';
-import { BodyText } from '@/components/ui/typography';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, BrainCircuit, Rocket, Upload } from 'lucide-react';
+import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, BrainCircuit, Rocket, Upload, Brain } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { fetchWithAuth } from '@/lib/api';
 import { LoginButton } from '@/components/ui/login-button';
 
 export default function CreatePage() {
-  const { user, isLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +37,10 @@ export default function CreatePage() {
   });
   
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
+  const [validationErrors, setValidationErrors] = useState({
+    title: '',
+    source_data: '',
+  });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -151,12 +154,34 @@ export default function CreatePage() {
 
 
 
-  const isFormValid = () => {
-    if (formData.source_type === 'pdf') {
-      return formData.title.trim() && (formData.source_data.trim() || pdfFiles.length > 0);
+  const validateForm = () => {
+    const newErrors = { title: '', source_data: '' };
+    let isValid = true;
+
+    if (!formData.title.trim()) {
+      newErrors.title = 'Quiz title is required.';
+      isValid = false;
     }
-    return formData.title.trim() && formData.source_data.trim();
+
+    if (formData.source_type !== 'pdf' && !formData.source_data.trim()) {
+      newErrors.source_data = 'Please provide a content source.';
+      isValid = false;
+    }
+
+    if (formData.source_type === 'pdf' && pdfFiles.length === 0) {
+      newErrors.source_data = 'Please upload at least one PDF file.';
+      isValid = false;
+    }
+
+    setValidationErrors(newErrors);
+    return isValid;
   };
+
+  const isFormValid =
+    formData.title.trim() &&
+    (formData.source_type === 'pdf'
+      ? pdfFiles.length > 0
+      : formData.source_data.trim());
 
   const pollForQuizStatus = async (quizId: string) => {
     const interval = setInterval(async () => {
@@ -197,7 +222,13 @@ export default function CreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading || !isFormValid()) return;
+
+    if (!validateForm()) {
+      toast.error('Please fix the errors before submitting.');
+      return;
+    }
+    
+    if (loading) return;
 
     setLoading(true);
     setError(null);
@@ -247,13 +278,214 @@ export default function CreatePage() {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center min-h-[calc(100vh-120px)]">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-[var(--quizito-electric-blue)] mx-auto" />
-            <BodyText>Loading...</BodyText>
+        <div className="fixed inset-0 bg-[var(--quizito-bg-primary)] flex items-center justify-center z-50">
+          {/* Animated Background */}
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Floating Particles */}
+            <div className="absolute inset-0">
+              {[...Array(20)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] rounded-full opacity-60"
+                  initial={{
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                  }}
+                  animate={{
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                  }}
+                  transition={{
+                    duration: Math.random() * 10 + 10,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                />
+              ))}
+            </div>
+            
+            {/* Gradient Orbs */}
+            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-[var(--quizito-electric-blue)]/20 to-[var(--quizito-neon-purple)]/20 rounded-full blur-3xl">
+              <motion.div
+                className="w-full h-full rounded-full"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.6, 0.3],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+            </div>
+            
+            <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-gradient-to-r from-[var(--quizito-cyber-green)]/20 to-[var(--quizito-electric-yellow)]/20 rounded-full blur-3xl">
+              <motion.div
+                className="w-full h-full rounded-full"
+                animate={{
+                  scale: [1.2, 1, 1.2],
+                  opacity: [0.4, 0.7, 0.4],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Main Loading Content */}
+          <div className="relative z-10 text-center space-y-8 max-w-2xl mx-auto px-6">
+            {/* Animated Logo */}
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ duration: 0.8, ease: "backOut" }}
+              className="mx-auto w-24 h-24 bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] rounded-3xl flex items-center justify-center shadow-2xl shadow-[var(--quizito-electric-blue)]/50"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="w-12 h-12"
+              >
+                <Sparkles className="w-12 h-12 text-white" />
+              </motion.div>
+            </motion.div>
+
+            {/* Main Title */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+            >
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-[var(--quizito-electric-blue)] via-[var(--quizito-neon-purple)] to-[var(--quizito-cyber-green)] bg-clip-text text-transparent mb-4">
+                Creating Your Quiz
+              </h1>
+              <p className="text-xl text-[var(--quizito-text-secondary)]">
+                Our AI is crafting the perfect questions for you
+              </p>
+            </motion.div>
+
+            {/* Progress Steps */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.8 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center justify-center space-x-4">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="flex items-center space-x-3"
+                >
+                  <div className="w-3 h-3 bg-[var(--quizito-cyber-green)] rounded-full animate-pulse" />
+                  <span className="text-[var(--quizito-text-secondary)]">Analyzing content</span>
+                </motion.div>
+                
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                  className="flex items-center space-x-3"
+                >
+                  <div className="w-3 h-3 bg-[var(--quizito-neon-purple)] rounded-full animate-pulse" />
+                  <span className="text-[var(--quizito-text-secondary)]">Generating questions</span>
+                </motion.div>
+                
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                  className="flex items-center space-x-3"
+                >
+                  <div className="w-3 h-3 bg-[var(--quizito-electric-blue)] rounded-full animate-pulse" />
+                  <span className="text-[var(--quizito-text-secondary)]">Creating options</span>
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Animated Progress Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.8 }}
+              className="space-y-4"
+            >
+              <div className="w-full max-w-md mx-auto bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-[var(--quizito-text-secondary)]">Progress</span>
+                  <motion.span
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="text-sm text-[var(--quizito-electric-blue)] font-semibold"
+                  >
+                    Processing...
+                  </motion.span>
+                </div>
+                <div className="w-full bg-[var(--quizito-glass-surface)] rounded-full h-3 border border-[var(--quizito-glass-border)] overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 8, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Fun Facts */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2, duration: 0.8 }}
+              className="space-y-4"
+            >
+              <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-6 max-w-lg mx-auto">
+                <motion.div
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="flex items-center justify-center space-x-3"
+                >
+                  <Brain className="w-5 h-5 text-[var(--quizito-electric-blue)]" />
+                  <span className="text-[var(--quizito-text-secondary)] text-sm">
+                    Did you know? Our AI analyzes thousands of similar questions to create the perfect quiz for you!
+                  </span>
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Loading Dots */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.5, duration: 0.8 }}
+              className="flex items-center justify-center space-x-2"
+            >
+              <motion.div
+                className="w-3 h-3 bg-[var(--quizito-electric-blue)] rounded-full"
+                animate={{ scale: [1, 1.5, 1] }}
+                transition={{ duration: 1, repeat: Infinity, delay: 0 }}
+              />
+              <motion.div
+                className="w-3 h-3 bg-[var(--quizito-neon-purple)] rounded-full"
+                animate={{ scale: [1, 1.5, 1] }}
+                transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
+              />
+              <motion.div
+                className="w-3 h-3 bg-[var(--quizito-cyber-green)] rounded-full"
+                animate={{ scale: [1, 1.5, 1] }}
+                transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
+              />
+            </motion.div>
           </div>
         </div>
       </AppLayout>
@@ -351,6 +583,9 @@ export default function CreatePage() {
                       disabled={loading}
                       className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     />
+                    {validationErrors.title && (
+                      <p className="text-sm text-[var(--quizito-hot-pink)] mt-1">{validationErrors.title}</p>
+                    )}
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="description" className="text-[var(--quizito-text-primary)] font-semibold">
@@ -404,6 +639,9 @@ export default function CreatePage() {
                       disabled={loading}
                       className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     />
+                    {validationErrors.source_data && (
+                      <p className="text-sm text-[var(--quizito-hot-pink)] mt-1">{validationErrors.source_data}</p>
+                    )}
                   </TabsContent>
                   
                   <TabsContent value="url" className="mt-6">
@@ -414,6 +652,9 @@ export default function CreatePage() {
                       disabled={loading}
                       className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     />
+                    {validationErrors.source_data && (
+                      <p className="text-sm text-[var(--quizito-hot-pink)] mt-1">{validationErrors.source_data}</p>
+                    )}
                   </TabsContent>
                   
                   <TabsContent value="youtube" className="mt-6">
@@ -481,13 +722,13 @@ export default function CreatePage() {
                               </>
                             ) : (
                               <>
-                                <Upload className="w-10 h-10 mb-3 text-[var(--quizito-text-secondary)]" />
-                                <p className="mb-2 text-sm text-[var(--quizito-text-secondary)]">
-                                  <span className="font-semibold">Click to upload</span> or drag and drop
-                                </p>
-                                <p className="text-xs text-[var(--quizito-text-tertiary)]">
+                            <Upload className="w-10 h-10 mb-3 text-[var(--quizito-text-secondary)]" />
+                            <p className="mb-2 text-sm text-[var(--quizito-text-secondary)]">
+                              <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-[var(--quizito-text-tertiary)]">
                                   PDF files only (MAX. 5MB each)
-                                </p>
+                            </p>
                               </>
                             )}
                           </div>
@@ -644,15 +885,15 @@ export default function CreatePage() {
               <motion.div variants={itemVariants}>
                 <Button
                   type="submit"
-                  disabled={!isFormValid() || loading || pdfProcessing}
+                  disabled={!isFormValid || loading || pdfProcessing}
                   className="w-full bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white px-8 py-6 text-xl font-bold rounded-2xl shadow-[0_0_30px_rgba(0,212,255,0.4)] hover:shadow-[0_0_40px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center"
                 >
                   {loading || pdfProcessing ? (
                     <>
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                          Generating Magic...
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                      Generating Magic...
                         </>
                       ) : (
                         <>
