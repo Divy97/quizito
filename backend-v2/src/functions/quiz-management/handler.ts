@@ -166,7 +166,7 @@ app.post('/:quizId/validate-answer', softAuthenticateToken, async (req, res) => 
   const userId = req.user?.id;
   let requestBody: any;
   let questionId: string | undefined;
-x
+
   try {
     // Handle case where body is still a Buffer
     if (Buffer.isBuffer(req.body)) {
