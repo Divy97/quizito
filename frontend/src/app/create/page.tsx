@@ -157,14 +157,16 @@ export default function CreatePage() {
 
         const data = await response.json();
 
-        if (data.status === 'COMPLETED') {
+        console.log('Quizz completedData:', data);
+
+        if (data.data?.status === 'COMPLETED') {
           clearInterval(interval);
           toast.success('Quiz generated successfully!');
           router.push(`/quiz/${quizId}`);
-        } else if (data.status === 'FAILED') {
+        } else if (data.data?.status === 'FAILED') {
           clearInterval(interval);
-          setError(data.errorMessage || 'Quiz generation failed. Please try again.');
-          toast.error(data.errorMessage || 'Quiz generation failed');
+          setError(data.data?.errorMessage || 'Quiz generation failed. Please try again.');
+          toast.error(data.data?.errorMessage || 'Quiz generation failed');
           setLoading(false);
         }
         // If status is 'PENDING', do nothing and let it poll again.
