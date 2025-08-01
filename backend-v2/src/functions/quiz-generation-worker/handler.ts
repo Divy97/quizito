@@ -103,7 +103,7 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
     };
 
     try {
-      await QuizPersistenceService.saveGeneratedQuiz(quizData, questionsPayload as any);
+      await QuizPersistenceService.saveGeneratedQuiz(quizData, questionsPayload as any, quizId);
       logger.info({ userId, quizId }, 'Quiz saved to database successfully');
     } catch (error) {
       logger.error('Error saving quiz to database', { 
