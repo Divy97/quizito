@@ -107,7 +107,7 @@ export interface QuizGenerationMessage {
 
 // API Schemas
 export const quizGenerationSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters long.'),
+  title: z.string().min(2, 'Title must be at least 5 characters long.'),
   description: z.string().optional(),
   source_type: z.enum(['pdf', 'url', 'topic', 'youtube']),
   source_data: z.string().min(3, 'The source must be at least 3 characters long.'),
@@ -120,7 +120,7 @@ export const quizGenerationSchema = z.object({
 export const quizSubmissionSchema = z.object({
   quizId: z.string().uuid(),
   answers: z.record(z.string().uuid(), z.string().uuid()),
-  nickname: z.string().min(3).max(20).nullable(),
+  nickname: z.string().max(20).nullable(),
   timeTaken: z.number().int().positive(),
 });
 
