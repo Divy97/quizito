@@ -35,7 +35,7 @@ type QuizPageResult = {
   leaderboard: LeaderboardEntry[];
 };
 
-async function getQuizPageData(quizId: string): Promise<QuizPageResult | null> {
+async function getQuizPageData(quizId: string): Promise<QuizPageResult | null | 'PROCESSING'> {
   try {
     const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/quizzes/${quizId}`, {
       method: 'GET',
@@ -44,6 +44,9 @@ async function getQuizPageData(quizId: string): Promise<QuizPageResult | null> {
 
     if (response.status === 404) {
       return null;
+    }
+    if (response.status === 202) {
+      return 'PROCESSING';
     }
     if (!response.ok) {
       // Log the error for server-side debugging
@@ -62,6 +65,18 @@ async function getQuizPageData(quizId: string): Promise<QuizPageResult | null> {
 export default async function QuizPage({params}: {params: Promise<{ quizId: string }>}) {
   const { quizId } = await params;
   const quizData = await getQuizPageData(quizId);
+
+  if (quizData === 'PROCESSING') {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center text-center p-4 min-h-[calc(100vh-120px)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--quizito-electric-blue)] mb-4"></div>
+          <PageTitle>Quiz Still Being Generated</PageTitle>
+          <MutedText>Your quiz is still being created. Please wait a moment and refresh the page.</MutedText>
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!quizData) {
     notFound();
