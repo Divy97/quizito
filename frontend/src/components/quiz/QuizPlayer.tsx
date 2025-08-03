@@ -265,7 +265,7 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                       <Brain className="h-3 w-3 md:h-4 md:w-4" />
                       <span className="text-xs md:text-sm">Question {currentQuestionIndex + 1}</span>
                     </div>
-                    <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-[var(--quizito-text-primary)] leading-relaxed px-2">
+                    <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-[var(--quizito-text-primary)] leading-relaxed px-2 text-justify">
                       {currentQuestion.question}
                     </h2>
                   </div>
