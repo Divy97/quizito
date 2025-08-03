@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, BrainCircuit, Rocket, Upload, Brain } from 'lucide-react';
+import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, Rocket, Upload, Brain } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { fetchWithAuth } from '@/lib/api';
@@ -24,7 +24,6 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pdfProcessing, setPdfProcessing] = useState(false);
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
