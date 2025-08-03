@@ -203,15 +203,15 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 min-h-[calc(100vh-120px)] relative z-10">
+    <div className="flex flex-col items-center justify-center p-4 md:p-6 min-h-[calc(100vh-120px)] relative z-10">
       {/* Progress Bar - Fixed at top */}
-      <div className="w-full max-w-4xl mb-6">
-          <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-4 shadow-xl shadow-[var(--quizito-electric-blue)]/5">
-            <div className="flex items-center justify-between mb-3">
-              <h1 className="text-xl font-bold text-[var(--quizito-text-primary)]">
+      <div className="w-full max-w-4xl mb-4 md:mb-6">
+          <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl md:rounded-2xl p-3 md:p-4 shadow-xl shadow-[var(--quizito-electric-blue)]/5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
+              <h1 className="text-lg md:text-xl font-bold text-[var(--quizito-text-primary)] text-center sm:text-left">
                 {quizData.title}
               </h1>
-              <div className="text-sm text-[var(--quizito-text-muted)]">
+              <div className="text-sm text-[var(--quizito-text-muted)] text-center sm:text-right">
                 Question {currentQuestionIndex + 1} of {totalQuestions}
               </div>
             </div>
@@ -230,21 +230,21 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-4xl bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10"
+          className="w-full max-w-4xl bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl md:rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10"
         >
 
           {/* Question Content */}
-          <div className="p-8">
+          <div className="p-4 md:p-6 lg:p-8">
             {/* Loading Status Message */}
             {isValidating && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-[var(--quizito-electric-blue)]/10 border border-[var(--quizito-electric-blue)]/20 rounded-xl text-center"
+                className="mb-4 md:mb-6 p-3 md:p-4 bg-[var(--quizito-electric-blue)]/10 border border-[var(--quizito-electric-blue)]/20 rounded-lg md:rounded-xl text-center"
               >
-                <div className="flex items-center justify-center gap-3">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--quizito-electric-blue)] border-t-transparent"></div>
-                  <span className="text-[var(--quizito-electric-blue)] font-medium">
+                <div className="flex items-center justify-center gap-2 md:gap-3">
+                  <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-2 border-[var(--quizito-electric-blue)] border-t-transparent"></div>
+                  <span className="text-[var(--quizito-electric-blue)] font-medium text-sm md:text-base">
                     Checking your answer...
                   </span>
                 </div>
@@ -259,18 +259,18 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="space-y-8">
+                <div className="space-y-6 md:space-y-8">
                   <div className="text-center">
-                    <div className="inline-flex items-center gap-2 bg-[var(--quizito-electric-blue)]/10 text-[var(--quizito-electric-blue)] px-4 py-2 rounded-full font-medium mb-6">
-                      <Brain className="h-4 w-4" />
-                      Question {currentQuestionIndex + 1}
+                    <div className="inline-flex items-center gap-2 bg-[var(--quizito-electric-blue)]/10 text-[var(--quizito-electric-blue)] px-3 md:px-4 py-2 rounded-full font-medium mb-4 md:mb-6">
+                      <Brain className="h-3 w-3 md:h-4 md:w-4" />
+                      <span className="text-sm md:text-base">Question {currentQuestionIndex + 1}</span>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-[var(--quizito-text-primary)] leading-relaxed">
+                    <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-[var(--quizito-text-primary)] leading-relaxed px-2">
                       {currentQuestion.question}
                     </h2>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-3 md:gap-4">
                     {currentQuestion.options.map((option) => {
                       const isSelected = selectedAnswers[currentQuestion.id] === option.id;
 
@@ -298,14 +298,14 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                           disabled={!!answerStatus || isValidating}
                           whileHover={{ scale: (answerStatus || isValidating) ? 1 : 1.02, y: (answerStatus || isValidating) ? 0 : -2 }}
                           whileTap={{ scale: 0.98 }}
-                          className={`w-full p-6 text-left text-lg backdrop-blur-xl rounded-2xl border transition-all duration-300 relative overflow-hidden ${buttonClass}`}
+                          className={`w-full p-4 md:p-6 text-left text-base md:text-lg backdrop-blur-xl rounded-xl md:rounded-2xl border transition-all duration-300 relative overflow-hidden ${buttonClass}`}
                         >                        
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3 md:gap-4">
                             {answerStatus === 'correct' && isSelected && (
-                              <Check className="h-6 w-6 text-[var(--quizito-cyber-green)] flex-shrink-0" />
+                              <Check className="h-5 w-5 md:h-6 md:w-6 text-[var(--quizito-cyber-green)] flex-shrink-0" />
                             )}
                             {answerStatus === 'incorrect' && isSelected && (
-                              <X className="h-6 w-6 text-[var(--quizito-hot-pink)] flex-shrink-0" />
+                              <X className="h-5 w-5 md:h-6 md:w-6 text-[var(--quizito-hot-pink)] flex-shrink-0" />
                             )}
                           
                             <span className="leading-relaxed">{option.option_text}</span>
@@ -334,27 +334,27 @@ function NicknameDialog({ onStart, quizTitle }: { onStart: (nickname: string) =>
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-6">
+    <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-4 md:p-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl p-8 shadow-2xl shadow-[var(--quizito-electric-blue)]/10"
+          className="w-full max-w-md bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-2xl shadow-[var(--quizito-electric-blue)]/10"
         >
-          <div className="text-center mb-8">
-            <div className="bg-gradient-to-r from-[var(--quizito-electric-blue)]/20 to-[var(--quizito-neon-purple)]/20 rounded-full p-4 w-fit mx-auto mb-6">
-              <User className="h-8 w-8 text-[var(--quizito-electric-blue)]" />
+          <div className="text-center mb-6 md:mb-8">
+            <div className="bg-gradient-to-r from-[var(--quizito-electric-blue)]/20 to-[var(--quizito-neon-purple)]/20 rounded-full p-3 md:p-4 w-fit mx-auto mb-4 md:mb-6">
+              <User className="h-6 w-6 md:h-8 md:w-8 text-[var(--quizito-electric-blue)]" />
             </div>
-            <h1 className="text-xl font-bold text-[var(--quizito-text-primary)] mb-3">
+            <h1 className="text-lg md:text-xl font-bold text-[var(--quizito-text-primary)] mb-2 md:mb-3">
               Ready for: <span className="text-[var(--quizito-electric-blue)]">{quizTitle}</span>
             </h1>
-            <p className="text-[var(--quizito-text-secondary)] leading-relaxed">
+            <p className="text-sm md:text-base text-[var(--quizito-text-secondary)] leading-relaxed">
               Enter a nickname to appear on the leaderboard and start the quiz.
             </p>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
             <div>
-              <Label htmlFor="nickname" className="text-[var(--quizito-text-primary)] font-semibold">
+              <Label htmlFor="nickname" className="text-[var(--quizito-text-primary)] font-semibold text-sm md:text-base">
                 Your Nickname
               </Label>
               <Input
@@ -362,17 +362,17 @@ function NicknameDialog({ onStart, quizTitle }: { onStart: (nickname: string) =>
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="E.g., Captain Quiz"
-                className="mt-2 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-12"
+                className="mt-2 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-10 md:h-12"
                 required
                 maxLength={30}
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-8 py-4 rounded-xl shadow-[0_0_20px_rgba(0,212,255,0.4)] hover:shadow-[0_0_30px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300"
+              className="w-full bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-6 md:px-8 py-3 md:py-4 rounded-lg md:rounded-xl shadow-[0_0_20px_rgba(0,212,255,0.4)] hover:shadow-[0_0_30px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300"
             >
-              <Play className="mr-2 h-5 w-5" />
-              Start Quiz
+              <Play className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+              <span className="text-sm md:text-base">Start Quiz</span>
             </Button>
           </form>
         </motion.div>
@@ -414,46 +414,46 @@ function QuizResults({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 min-h-[calc(100vh-120px)] relative z-10">
+    <div className="flex flex-col items-center justify-center p-4 md:p-6 min-h-[calc(100vh-120px)] relative z-10">
       <motion.div 
           initial={{ opacity: 0, scale: 0.95 }} 
           animate={{ opacity: 1, scale: 1 }} 
           transition={{ duration: 0.5 }} 
-          className="w-full max-w-5xl space-y-8"
+          className="w-full max-w-5xl space-y-6 md:space-y-8"
         >
           {/* Score Header */}
-          <div className="w-full max-w-4xl mb-8 text-center">
+          <div className="w-full max-w-4xl mb-6 md:mb-8 text-center">
             <motion.div 
               initial={{ scale: 0 }} 
               animate={{ scale: 1 }} 
               transition={{ delay: 0.2, type: 'spring' }}
-              className="mb-6"
+              className="mb-4 md:mb-6"
             >
-              <div className={`w-32 h-32 mx-auto rounded-full flex items-center justify-center text-5xl font-bold text-white relative ${results.score >= 70 ? 'bg-gradient-to-r from-[var(--quizito-cyber-green)] to-[var(--quizito-electric-blue)]' : 'bg-gradient-to-r from-[var(--quizito-hot-pink)] to-[var(--quizito-electric-yellow)]'} shadow-2xl shadow-[var(--quizito-electric-blue)]/20`}>
+              <div className={`w-24 h-24 md:w-32 md:h-32 mx-auto rounded-full flex items-center justify-center text-3xl md:text-5xl font-bold text-white relative ${results.score >= 70 ? 'bg-gradient-to-r from-[var(--quizito-cyber-green)] to-[var(--quizito-electric-blue)]' : 'bg-gradient-to-r from-[var(--quizito-hot-pink)] to-[var(--quizito-electric-yellow)]'} shadow-2xl shadow-[var(--quizito-electric-blue)]/20`}>
                 {Math.round(results.score)}%
                 {results.score >= 70 && (
-                  <div className="absolute -top-3 -right-3">
-                    <Trophy className="h-10 w-10 text-[var(--quizito-electric-yellow)]" />
+                  <div className="absolute -top-2 -right-2 md:-top-3 md:-right-3">
+                    <Trophy className="h-6 w-6 md:h-10 md:w-10 text-[var(--quizito-electric-yellow)]" />
                   </div>
                 )}
               </div>
             </motion.div>
-            <h1 className="text-4xl md:text-5xl font-bold text-[var(--quizito-text-primary)] mb-4">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-[var(--quizito-text-primary)] mb-3 md:mb-4">
               Quiz Complete!
             </h1>
-            <p className="text-xl text-[var(--quizito-text-secondary)]">
+            <p className="text-base md:text-lg lg:text-xl text-[var(--quizito-text-secondary)] px-4">
               You answered <span className="text-[var(--quizito-electric-blue)] font-bold">{results.correctAnswers}</span> out of <span className="font-bold">{results.totalQuestions}</span> questions correctly.
             </p>
           </div>
 
           {/* Results Card */}
-          <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10">
-            <div className="p-8">
-              <h3 className="text-2xl font-bold text-[var(--quizito-text-primary)] mb-6 flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-[var(--quizito-electric-blue)]" />
+          <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl md:rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10">
+            <div className="p-4 md:p-6 lg:p-8">
+              <h3 className="text-xl md:text-2xl font-bold text-[var(--quizito-text-primary)] mb-4 md:mb-6 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-[var(--quizito-electric-blue)]" />
                 Detailed Results
               </h3>
-              <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-4 md:space-y-6 max-h-[60vh] overflow-y-auto pr-2">
                 {quizData.questions.map((question, index) => {
                   const result = results.results.find(r => r.questionId === question.id);
                   
@@ -470,12 +470,12 @@ function QuizResults({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="bg-gradient-to-br from-[var(--quizito-glass-surface)] to-transparent backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl p-6 hover:border-[var(--quizito-electric-blue)]/30 transition-all duration-300"
+                      className="bg-gradient-to-br from-[var(--quizito-glass-surface)] to-transparent backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl md:rounded-2xl p-4 md:p-6 hover:border-[var(--quizito-electric-blue)]/30 transition-all duration-300"
                     >
                       {/* Question Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
+                        <div className="flex items-start gap-3">
+                          <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm font-bold flex-shrink-0 mt-1 md:mt-0 ${
                             result?.isCorrect 
                               ? 'bg-[var(--quizito-cyber-green)]/20 text-[var(--quizito-cyber-green)] border border-[var(--quizito-cyber-green)]/30' 
                               : result
@@ -484,25 +484,27 @@ function QuizResults({
                           }`}>
                             {index + 1}
                           </div>
-                          <h4 className="font-semibold text-[var(--quizito-text-primary)] text-lg leading-relaxed">
+                          <h4 className="font-semibold text-[var(--quizito-text-primary)] text-base md:text-lg leading-relaxed">
                             {question.question}
                           </h4>
                         </div>
                         {result && (
-                          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold ${
+                          <div className={`flex items-center gap-2 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-semibold ${
                             result.isCorrect 
                               ? 'bg-[var(--quizito-cyber-green)]/20 text-[var(--quizito-cyber-green)] border border-[var(--quizito-cyber-green)]/30' 
                               : 'bg-[var(--quizito-hot-pink)]/20 text-[var(--quizito-hot-pink)] border border-[var(--quizito-hot-pink)]/30'
                           }`}>
                             {result.isCorrect ? (
                               <>
-                                <Check className="h-4 w-4" />
-                                Correct
+                                <Check className="h-3 w-3 md:h-4 md:w-4" />
+                                <span className="hidden sm:inline">Correct</span>
+                                <span className="sm:hidden">✓</span>
                               </>
                             ) : (
                               <>
-                                <X className="h-4 w-4" />
-                                Incorrect
+                                <X className="h-3 w-3 md:h-4 md:w-4" />
+                                <span className="hidden sm:inline">Incorrect</span>
+                                <span className="sm:hidden">✗</span>
                               </>
                             )}
                           </div>
@@ -510,7 +512,7 @@ function QuizResults({
                       </div>
 
                       {/* Options */}
-                      <div className="space-y-3 mb-4">
+                      <div className="space-y-2 md:space-y-3 mb-4">
                         {question.options.map(option => {
                           const isSelected = result?.selectedOptionId === option.id;
                           const isCorrect = result?.correctOptionId === option.id;
@@ -532,27 +534,27 @@ function QuizResults({
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: index * 0.1 + 0.1 }}
-                              className={`flex items-center gap-4 p-4 rounded-xl border backdrop-blur-xl transition-all duration-300 ${optionClass}`}
+                              className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg md:rounded-xl border backdrop-blur-xl transition-all duration-300 ${optionClass}`}
                             >
-                              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${iconClass}`}>
+                              <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center flex-shrink-0 ${iconClass}`}>
                                 {isCorrect ? (
-                                  <Check className="h-4 w-4" />
+                                  <Check className="h-3 w-3 md:h-4 md:w-4" />
                                 ) : isSelected ? (
-                                  <X className="h-4 w-4" />
+                                  <X className="h-3 w-3 md:h-4 md:w-4" />
                                 ) : (
-                                  <div className="w-2 h-2 rounded-full bg-current opacity-50" />
+                                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-current opacity-50" />
                                 )}
                               </div>
-                              <span className="leading-relaxed font-medium">
+                              <span className="leading-relaxed font-medium text-sm md:text-base">
                                 {option.option_text}
                               </span>
                               {isSelected && (
-                                <div className="ml-auto text-xs font-medium opacity-70">
+                                <div className="ml-auto text-xs font-medium opacity-70 hidden sm:block">
                                   Your Answer
                                 </div>
                               )}
                               {isCorrect && !isSelected && (
-                                <div className="ml-auto text-xs font-medium opacity-70">
+                                <div className="ml-auto text-xs font-medium opacity-70 hidden sm:block">
                                   Correct Answer
                                 </div>
                               )}
@@ -567,15 +569,15 @@ function QuizResults({
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.1 + 0.2 }}
-                          className="mt-4 p-4 rounded-xl bg-gradient-to-r from-[var(--quizito-electric-blue)]/10 to-[var(--quizito-neon-purple)]/10 border border-[var(--quizito-electric-blue)]/20"
+                          className="mt-4 p-3 md:p-4 rounded-lg md:rounded-xl bg-gradient-to-r from-[var(--quizito-electric-blue)]/10 to-[var(--quizito-neon-purple)]/10 border border-[var(--quizito-electric-blue)]/20"
                         >
-                          <div className="flex items-start gap-3">
-                            <Brain className="h-5 w-5 text-[var(--quizito-electric-blue)] flex-shrink-0 mt-0.5" />
+                          <div className="flex items-start gap-2 md:gap-3">
+                            <Brain className="h-4 w-4 md:h-5 md:w-5 text-[var(--quizito-electric-blue)] flex-shrink-0 mt-0.5" />
                             <div>
-                              <p className="font-semibold text-[var(--quizito-text-primary)] mb-1">
+                              <p className="font-semibold text-[var(--quizito-text-primary)] mb-1 text-sm md:text-base">
                                 Explanation
                               </p>
-                              <p className="text-[var(--quizito-text-secondary)] leading-relaxed">
+                              <p className="text-[var(--quizito-text-secondary)] leading-relaxed text-sm md:text-base">
                                 {result.explanation}
                               </p>
                             </div>
@@ -587,20 +589,20 @@ function QuizResults({
                 })}
               </div>
               
-              <div className="flex flex-col md:flex-row justify-center gap-4 mt-8">
+              <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4 mt-6 md:mt-8">
                 <Button 
                   onClick={() => window.location.reload()}
-                  className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] hover:border-[var(--quizito-electric-blue)]/50 hover:bg-[var(--quizito-glass-surface-hover)]"
+                  className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] hover:border-[var(--quizito-electric-blue)]/50 hover:bg-[var(--quizito-glass-surface-hover)] px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl"
                 >
                   <RefreshCw className="mr-2 h-4 w-4" /> 
-                  Retake Quiz
+                  <span className="text-sm md:text-base">Retake Quiz</span>
                 </Button>
                 <Button 
                   onClick={() => router.push('/my-quizzes')}
-                  className="bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-6 py-3 rounded-xl shadow-[0_0_20px_rgba(0,212,255,0.4)] hover:shadow-[0_0_30px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300"
+                  className="bg-gradient-to-r from-[var(--quizito-electric-blue)] to-[var(--quizito-neon-purple)] text-white font-semibold px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl shadow-[0_0_20px_rgba(0,212,255,0.4)] hover:shadow-[0_0_30px_rgba(0,212,255,0.6)] hover:scale-105 transition-all duration-300"
                 >
                   <BarChart className="mr-2 h-4 w-4" /> 
-                  View My Quizzes
+                  <span className="text-sm md:text-base">View My Quizzes</span>
                 </Button>
               </div>
             </div>
@@ -608,38 +610,38 @@ function QuizResults({
           
           {/* Leaderboard Card */}
           {isPublicQuiz && (
-            <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/5">
-              <div className="p-8 border-b border-[var(--quizito-glass-border)]">
-                <div className="flex justify-between items-start mb-4">
+            <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl md:rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/5">
+              <div className="p-4 md:p-6 lg:p-8 border-b border-[var(--quizito-glass-border)]">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-[var(--quizito-text-primary)] flex items-center gap-3">
-                      <Trophy className="h-6 w-6 text-[var(--quizito-electric-yellow)]" />
+                    <h2 className="text-xl md:text-2xl font-bold text-[var(--quizito-text-primary)] flex items-center gap-2 md:gap-3">
+                      <Trophy className="h-5 w-5 md:h-6 md:w-6 text-[var(--quizito-electric-yellow)]" />
                       Leaderboard
                     </h2>
-                    <p className="text-[var(--quizito-text-secondary)] mt-2">
+                    <p className="text-sm md:text-base text-[var(--quizito-text-secondary)] mt-2">
                       See how you rank against other players
                     </p>
                   </div>
                   <Button
                     onClick={handleRefreshLeaderboard}
                     disabled={isRefreshing}
-                    className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] hover:border-[var(--quizito-electric-blue)]/50 hover:bg-[var(--quizito-glass-surface-hover)] transition-all duration-300"
+                    className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] hover:border-[var(--quizito-electric-blue)]/50 hover:bg-[var(--quizito-glass-surface-hover)] transition-all duration-300 px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl"
                   >
                     <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                    <span className="text-sm md:text-base">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
                   </Button>
                 </div>
               </div>
-              <div className="p-8">
+              <div className="p-4 md:p-6 lg:p-8">
                 {leaderboard.length > 0 ? (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="border-b border-[var(--quizito-glass-border)]">
-                          <TableHead className="w-[60px] text-center text-[var(--quizito-text-primary)]">Rank</TableHead>
-                          <TableHead className="text-[var(--quizito-text-primary)]">Nickname</TableHead>
-                          <TableHead className="text-right text-[var(--quizito-text-primary)]">Score</TableHead>
-                          <TableHead className="text-right text-[var(--quizito-text-primary)]">Time</TableHead>
+                          <TableHead className="w-[50px] md:w-[60px] text-center text-[var(--quizito-text-primary)] text-sm md:text-base">Rank</TableHead>
+                          <TableHead className="text-[var(--quizito-text-primary)] text-sm md:text-base">Nickname</TableHead>
+                          <TableHead className="text-right text-[var(--quizito-text-primary)] text-sm md:text-base">Score</TableHead>
+                          <TableHead className="text-right text-[var(--quizito-text-primary)] text-sm md:text-base">Time</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -647,16 +649,16 @@ function QuizResults({
                           const isCurrentUser = entry.nickname === nickname;
                           return (
                             <TableRow key={index} className={`border-b-0 ${isCurrentUser ? 'bg-[var(--quizito-electric-blue)]/10' : ''}`}>
-                              <TableCell className="text-center font-bold text-lg">
+                              <TableCell className="text-center font-bold text-base md:text-lg">
                                 {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                               </TableCell>
-                              <TableCell className={`font-medium ${isCurrentUser ? 'text-[var(--quizito-electric-blue)]' : 'text-[var(--quizito-text-primary)]'}`}>
+                              <TableCell className={`font-medium text-sm md:text-base ${isCurrentUser ? 'text-[var(--quizito-electric-blue)]' : 'text-[var(--quizito-text-primary)]'}`}>
                                 {entry.nickname}
                               </TableCell>
-                              <TableCell className="text-right font-semibold text-[var(--quizito-cyber-green)]">
+                              <TableCell className="text-right font-semibold text-[var(--quizito-cyber-green)] text-sm md:text-base">
                                 {Math.round(entry.score)}%
                               </TableCell>
-                              <TableCell className="text-right text-[var(--quizito-text-muted)]">
+                              <TableCell className="text-right text-[var(--quizito-text-muted)] text-sm md:text-base">
                                 {entry.time_taken_seconds}s
                               </TableCell>
                             </TableRow>
@@ -666,9 +668,9 @@ function QuizResults({
                     </Table>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <Trophy className="h-12 w-12 text-[var(--quizito-electric-blue)] mx-auto mb-4" />
-                    <p className="text-[var(--quizito-text-secondary)]">
+                  <div className="text-center py-6 md:py-8">
+                    <Trophy className="h-8 w-8 md:h-12 md:w-12 text-[var(--quizito-electric-blue)] mx-auto mb-3 md:mb-4" />
+                    <p className="text-sm md:text-base text-[var(--quizito-text-secondary)]">
                       You&apos;re the first to take this quiz! Your score is at the top of the leaderboard.
                     </p>
                   </div>

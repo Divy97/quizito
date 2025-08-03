@@ -92,10 +92,10 @@ export default function QuizPage() {
   if (quizData === 'LOADING') {
     return (
       <AppLayout>
-        <div className="flex flex-col items-center justify-center text-center p-4 min-h-[calc(100vh-120px)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--quizito-electric-blue)] mb-4"></div>
-          <PageTitle>Loading Quiz...</PageTitle>
-          <MutedText>Please wait while we load your quiz.</MutedText>
+        <div className="flex flex-col items-center justify-center text-center p-4 md:p-6 min-h-[calc(100vh-120px)]">
+          <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-[var(--quizito-electric-blue)] mb-3 md:mb-4"></div>
+          <PageTitle className="text-2xl md:text-3xl lg:text-4xl">Loading Quiz...</PageTitle>
+          <MutedText className="text-sm md:text-base">Please wait while we load your quiz.</MutedText>
         </div>
       </AppLayout>
     );
@@ -109,10 +109,10 @@ export default function QuizPage() {
   if (quizData === 'PROCESSING') {
     return (
       <AppLayout>
-        <div className="flex flex-col items-center justify-center text-center p-4 min-h-[calc(100vh-120px)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--quizito-electric-blue)] mb-4"></div>
-          <PageTitle>Quiz Still Being Generated</PageTitle>
-          <MutedText>Your quiz is still being created. Please wait a moment and refresh the page.</MutedText>
+        <div className="flex flex-col items-center justify-center text-center p-4 md:p-6 min-h-[calc(100vh-120px)]">
+          <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-[var(--quizito-electric-blue)] mb-3 md:mb-4"></div>
+          <PageTitle className="text-2xl md:text-3xl lg:text-4xl">Quiz Still Being Generated</PageTitle>
+          <MutedText className="text-sm md:text-base px-4">Your quiz is still being created. Please wait a moment and refresh the page.</MutedText>
         </div>
       </AppLayout>
     );
@@ -123,10 +123,10 @@ export default function QuizPage() {
   if (!quizData.is_public && !quizData.isOwner) {
     return (
        <AppLayout>
-        <div className="flex flex-col items-center justify-center text-center p-4 min-h-[calc(100vh-120px)]">
-          <Lock className="h-12 w-12 text-purple-400 mb-4" />
-          <PageTitle>Private Quiz</PageTitle>
-          <MutedText>This quiz is private and can only be viewed by its owner.</MutedText>
+        <div className="flex flex-col items-center justify-center text-center p-4 md:p-6 min-h-[calc(100vh-120px)]">
+          <Lock className="h-8 w-8 md:h-12 md:w-12 text-purple-400 mb-3 md:mb-4" />
+          <PageTitle className="text-2xl md:text-3xl lg:text-4xl">Private Quiz</PageTitle>
+          <MutedText className="text-sm md:text-base px-4">This quiz is private and can only be viewed by its owner.</MutedText>
         </div>
       </AppLayout>
     )
@@ -140,7 +140,7 @@ export default function QuizPage() {
   // Otherwise, show the quiz player for them to take the quiz.
   return (
     <AppLayout>
-      <div className="w-full max-w-4xl mx-auto px-4 py-8">
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8">
         <QuizPlayer quizData={quizData} isOwner={quizData.isOwner} />
       </div>
     </AppLayout>
