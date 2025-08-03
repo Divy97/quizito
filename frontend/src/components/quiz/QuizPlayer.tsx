@@ -205,13 +205,13 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
   return (
     <div className="flex flex-col items-center justify-center p-4 md:p-6 min-h-[calc(100vh-120px)] relative z-10">
       {/* Progress Bar - Fixed at top */}
-      <div className="w-full max-w-4xl mb-4 md:mb-6">
-          <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl md:rounded-2xl p-3 md:p-4 shadow-xl shadow-[var(--quizito-electric-blue)]/5">
+      <div className="w-full max-w-4xl mb-3 md:mb-4">
+          <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl md:rounded-2xl p-2 md:p-3 shadow-xl shadow-[var(--quizito-electric-blue)]/5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
-              <h1 className="text-lg md:text-xl font-bold text-[var(--quizito-text-primary)] text-center sm:text-left">
+              <h1 className="text-base md:text-lg font-bold text-[var(--quizito-text-primary)] text-center sm:text-left">
                 {quizData.title}
               </h1>
-              <div className="text-sm text-[var(--quizito-text-muted)] text-center sm:text-right">
+              <div className="text-xs md:text-sm text-[var(--quizito-text-muted)] text-center sm:text-right">
                 Question {currentQuestionIndex + 1} of {totalQuestions}
               </div>
             </div>
@@ -230,21 +230,21 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-4xl bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl md:rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10"
+          className="w-full max-w-4xl bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl md:rounded-2xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10"
         >
 
           {/* Question Content */}
-          <div className="p-4 md:p-6 lg:p-8">
+          <div className="p-3 md:p-4 lg:p-6">
             {/* Loading Status Message */}
             {isValidating && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-4 md:mb-6 p-3 md:p-4 bg-[var(--quizito-electric-blue)]/10 border border-[var(--quizito-electric-blue)]/20 rounded-lg md:rounded-xl text-center"
+                className="mb-3 md:mb-4 p-2 md:p-3 bg-[var(--quizito-electric-blue)]/10 border border-[var(--quizito-electric-blue)]/20 rounded-lg md:rounded-xl text-center"
               >
-                <div className="flex items-center justify-center gap-2 md:gap-3">
-                  <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-2 border-[var(--quizito-electric-blue)] border-t-transparent"></div>
-                  <span className="text-[var(--quizito-electric-blue)] font-medium text-sm md:text-base">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-2 border-[var(--quizito-electric-blue)] border-t-transparent"></div>
+                  <span className="text-[var(--quizito-electric-blue)] font-medium text-xs md:text-sm">
                     Checking your answer...
                   </span>
                 </div>
@@ -259,18 +259,18 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="space-y-6 md:space-y-8">
+                <div className="space-y-4 md:space-y-6">
                   <div className="text-center">
-                    <div className="inline-flex items-center gap-2 bg-[var(--quizito-electric-blue)]/10 text-[var(--quizito-electric-blue)] px-3 md:px-4 py-2 rounded-full font-medium mb-4 md:mb-6">
+                    <div className="inline-flex items-center gap-2 bg-[var(--quizito-electric-blue)]/10 text-[var(--quizito-electric-blue)] px-2 md:px-3 py-1 md:py-2 rounded-full font-medium mb-3 md:mb-4">
                       <Brain className="h-3 w-3 md:h-4 md:w-4" />
-                      <span className="text-sm md:text-base">Question {currentQuestionIndex + 1}</span>
+                      <span className="text-xs md:text-sm">Question {currentQuestionIndex + 1}</span>
                     </div>
-                    <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-[var(--quizito-text-primary)] leading-relaxed px-2">
+                    <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-[var(--quizito-text-primary)] leading-relaxed px-2">
                       {currentQuestion.question}
                     </h2>
                   </div>
                   
-                  <div className="grid grid-cols-1 gap-3 md:gap-4">
+                  <div className="grid grid-cols-1 gap-2 md:gap-3">
                     {currentQuestion.options.map((option) => {
                       const isSelected = selectedAnswers[currentQuestion.id] === option.id;
 
@@ -298,14 +298,14 @@ export function QuizPlayer({ quizData, isOwner }: QuizPlayerProps) {
                           disabled={!!answerStatus || isValidating}
                           whileHover={{ scale: (answerStatus || isValidating) ? 1 : 1.02, y: (answerStatus || isValidating) ? 0 : -2 }}
                           whileTap={{ scale: 0.98 }}
-                          className={`w-full p-4 md:p-6 text-left text-base md:text-lg backdrop-blur-xl rounded-xl md:rounded-2xl border transition-all duration-300 relative overflow-hidden ${buttonClass}`}
+                          className={`w-full p-3 md:p-4 text-left text-sm md:text-base backdrop-blur-xl rounded-lg md:rounded-xl border transition-all duration-300 relative overflow-hidden ${buttonClass}`}
                         >                        
-                          <div className="flex items-center gap-3 md:gap-4">
+                          <div className="flex items-center gap-2 md:gap-3">
                             {answerStatus === 'correct' && isSelected && (
-                              <Check className="h-5 w-5 md:h-6 md:w-6 text-[var(--quizito-cyber-green)] flex-shrink-0" />
+                              <Check className="h-4 w-4 md:h-5 md:w-5 text-[var(--quizito-cyber-green)] flex-shrink-0" />
                             )}
                             {answerStatus === 'incorrect' && isSelected && (
-                              <X className="h-5 w-5 md:h-6 md:w-6 text-[var(--quizito-hot-pink)] flex-shrink-0" />
+                              <X className="h-4 w-4 md:h-5 md:w-5 text-[var(--quizito-hot-pink)] flex-shrink-0" />
                             )}
                           
                             <span className="leading-relaxed">{option.option_text}</span>
@@ -438,10 +438,10 @@ function QuizResults({
                 )}
               </div>
             </motion.div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-[var(--quizito-text-primary)] mb-3 md:mb-4">
+            <h1 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-[var(--quizito-text-primary)] mb-2 md:mb-3">
               Quiz Complete!
             </h1>
-            <p className="text-base md:text-lg lg:text-xl text-[var(--quizito-text-secondary)] px-4">
+            <p className="text-sm md:text-base lg:text-lg text-[var(--quizito-text-secondary)] px-4">
               You answered <span className="text-[var(--quizito-electric-blue)] font-bold">{results.correctAnswers}</span> out of <span className="font-bold">{results.totalQuestions}</span> questions correctly.
             </p>
           </div>
@@ -449,11 +449,11 @@ function QuizResults({
           {/* Results Card */}
           <div className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-2xl md:rounded-3xl shadow-2xl shadow-[var(--quizito-electric-blue)]/10">
             <div className="p-4 md:p-6 lg:p-8">
-              <h3 className="text-xl md:text-2xl font-bold text-[var(--quizito-text-primary)] mb-4 md:mb-6 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-[var(--quizito-electric-blue)]" />
+              <h3 className="text-lg md:text-xl font-bold text-[var(--quizito-text-primary)] mb-3 md:mb-4 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-[var(--quizito-electric-blue)]" />
                 Detailed Results
               </h3>
-              <div className="space-y-4 md:space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-3 md:space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 {quizData.questions.map((question, index) => {
                   const result = results.results.find(r => r.questionId === question.id);
                   
@@ -470,12 +470,12 @@ function QuizResults({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="bg-gradient-to-br from-[var(--quizito-glass-surface)] to-transparent backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl md:rounded-2xl p-4 md:p-6 hover:border-[var(--quizito-electric-blue)]/30 transition-all duration-300"
+                      className="bg-gradient-to-br from-[var(--quizito-glass-surface)] to-transparent backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-lg md:rounded-xl p-3 md:p-4 hover:border-[var(--quizito-electric-blue)]/30 transition-all duration-300"
                     >
                       {/* Question Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm font-bold flex-shrink-0 mt-1 md:mt-0 ${
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0 mb-3">
+                        <div className="flex items-start gap-2 md:gap-3">
+                          <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 md:mt-0 ${
                             result?.isCorrect 
                               ? 'bg-[var(--quizito-cyber-green)]/20 text-[var(--quizito-cyber-green)] border border-[var(--quizito-cyber-green)]/30' 
                               : result
@@ -484,7 +484,7 @@ function QuizResults({
                           }`}>
                             {index + 1}
                           </div>
-                          <h4 className="font-semibold text-[var(--quizito-text-primary)] text-base md:text-lg leading-relaxed">
+                          <h4 className="font-semibold text-[var(--quizito-text-primary)] text-sm md:text-base leading-relaxed">
                             {question.question}
                           </h4>
                         </div>
@@ -512,7 +512,7 @@ function QuizResults({
                       </div>
 
                       {/* Options */}
-                      <div className="space-y-2 md:space-y-3 mb-4">
+                      <div className="space-y-2 mb-3">
                         {question.options.map(option => {
                           const isSelected = result?.selectedOptionId === option.id;
                           const isCorrect = result?.correctOptionId === option.id;
@@ -534,18 +534,18 @@ function QuizResults({
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: index * 0.1 + 0.1 }}
-                              className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg md:rounded-xl border backdrop-blur-xl transition-all duration-300 ${optionClass}`}
+                              className={`flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg border backdrop-blur-xl transition-all duration-300 ${optionClass}`}
                             >
-                              <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center flex-shrink-0 ${iconClass}`}>
+                              <div className={`w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${iconClass}`}>
                                 {isCorrect ? (
-                                  <Check className="h-3 w-3 md:h-4 md:w-4" />
+                                  <Check className="h-2.5 w-2.5 md:h-3 md:w-3" />
                                 ) : isSelected ? (
-                                  <X className="h-3 w-3 md:h-4 md:w-4" />
+                                  <X className="h-2.5 w-2.5 md:h-3 md:w-3" />
                                 ) : (
-                                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-current opacity-50" />
+                                  <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-current opacity-50" />
                                 )}
                               </div>
-                              <span className="leading-relaxed font-medium text-sm md:text-base">
+                              <span className="leading-relaxed font-medium text-xs md:text-sm">
                                 {option.option_text}
                               </span>
                               {isSelected && (
@@ -569,15 +569,15 @@ function QuizResults({
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.1 + 0.2 }}
-                          className="mt-4 p-3 md:p-4 rounded-lg md:rounded-xl bg-gradient-to-r from-[var(--quizito-electric-blue)]/10 to-[var(--quizito-neon-purple)]/10 border border-[var(--quizito-electric-blue)]/20"
+                          className="mt-3 p-2 md:p-3 rounded-lg bg-gradient-to-r from-[var(--quizito-electric-blue)]/10 to-[var(--quizito-neon-purple)]/10 border border-[var(--quizito-electric-blue)]/20"
                         >
-                          <div className="flex items-start gap-2 md:gap-3">
-                            <Brain className="h-4 w-4 md:h-5 md:w-5 text-[var(--quizito-electric-blue)] flex-shrink-0 mt-0.5" />
+                          <div className="flex items-start gap-2">
+                            <Brain className="h-3 w-3 md:h-4 md:w-4 text-[var(--quizito-electric-blue)] flex-shrink-0 mt-0.5" />
                             <div>
-                              <p className="font-semibold text-[var(--quizito-text-primary)] mb-1 text-sm md:text-base">
+                              <p className="font-semibold text-[var(--quizito-text-primary)] mb-1 text-xs md:text-sm">
                                 Explanation
                               </p>
-                              <p className="text-[var(--quizito-text-secondary)] leading-relaxed text-sm md:text-base">
+                              <p className="text-[var(--quizito-text-secondary)] leading-relaxed text-xs md:text-sm">
                                 {result.explanation}
                               </p>
                             </div>
