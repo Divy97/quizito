@@ -3,8 +3,6 @@
 > **Transform any content into engaging interactive quizzes in 30 seconds**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Quizito-blue?style=for-the-badge&logo=vercel)](https://quizito.vercel.app)
-[![Tech Stack](https://img.shields.io/badge/Stack-React%20%7C%20Next.js%20%7C%20AWS-blue?style=for-the-badge)](https://quizito.vercel.app)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 ## 🌟 Live Project
 
