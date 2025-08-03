@@ -458,11 +458,11 @@ function QuizResults({
                   const result = results.results.find(r => r.questionId === question.id);
                   
                   // Debug logging
-                  console.log(`Question ${index + 1}:`, {
-                    questionId: question.id,
-                    hasResult: !!result,
-                    result: result
-                  });
+                  // console.log(`Question ${index + 1}:`, {
+                  //   questionId: question.id,
+                  //   hasResult: !!result,
+                  //   result: result
+                  // });
                   
                   return (
                     <motion.div 

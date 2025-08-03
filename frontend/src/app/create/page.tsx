@@ -196,7 +196,7 @@ export default function CreatePage() {
 
         const data = await response.json();
 
-        console.log('Quizz completedData:', data);
+        // console.log('Quizz completedData:', data);
 
         if (data.data?.status === 'COMPLETED') {
           clearInterval(interval);
@@ -253,10 +253,10 @@ export default function CreatePage() {
       }
 
       const result = await response.json();
-      console.log('Quiz generation response:', result);
+      // console.log('Quiz generation response:', result);
 
       const quizId = result.data?.quizId;
-      console.log('QuizID:', quizId);
+      // console.log('QuizID:', quizId);
 
 
       if (!quizId) {
