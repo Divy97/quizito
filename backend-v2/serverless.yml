@@ -70,7 +70,7 @@ provider:
             - s3:GetObject
             - s3:PutObject
             - s3:DeleteObject
-          Resource: "arn:aws:s3:::quizito-uploads-${self:provider.stage}/*"
+          Resource: "arn:aws:s3:::quizito-uploads-${self:provider.stage}-${aws:accountId}/*"
         - Effect: Allow
           Action:
             - kms:GenerateDataKey
@@ -235,7 +235,7 @@ resources:
     QuizitoUploadsBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: quizito-uploads-${self:provider.stage}
+        BucketName: quizito-uploads-${self:provider.stage}-${aws:accountId}
         CorsConfiguration:
           CorsRules:
             - AllowedHeaders:
