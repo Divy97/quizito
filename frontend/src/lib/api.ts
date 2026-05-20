@@ -1,7 +1,10 @@
 import { config } from './config';
 
 export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem('token');
+  const token =
+    typeof window !== 'undefined' && window.localStorage?.getItem
+      ? window.localStorage.getItem('token')
+      : null;
 
   const headers: Record<string, string> = {
     ...options.headers as Record<string, string>,

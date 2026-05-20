@@ -23,6 +23,22 @@ interface UserContextType {
 // Create the context
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+const getStoredToken = () => {
+  if (typeof window === 'undefined' || !window.localStorage?.getItem) {
+    return null;
+  }
+
+  return window.localStorage.getItem('token');
+};
+
+const clearStoredToken = () => {
+  if (typeof window === 'undefined' || !window.localStorage?.removeItem) {
+    return;
+  }
+
+  window.localStorage.removeItem('token');
+};
+
 // Define the provider component
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -31,7 +47,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getStoredToken();
       if (!token) {
         setUser(null);
         setIsLoading(false);
@@ -45,12 +61,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setUser(userData);
       } else {
         setUser(null);
-        localStorage.removeItem('token'); // Clear invalid token
+        clearStoredToken();
       }
     } catch (error) {
       console.error('Failed to fetch user', error);
       setUser(null);
-      localStorage.removeItem('token'); // Clear invalid token
+      clearStoredToken();
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +82,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = useCallback(async () => {
     try {
-      localStorage.removeItem('token');
+      clearStoredToken();
       setUser(null);
       setHasInitialized(false); // Reset initialization flag
     } catch (error) {
