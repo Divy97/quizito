@@ -12,13 +12,14 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, Rocket, Upload, Brain, KeyRound } from 'lucide-react';
+import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, AlertTriangle, CheckCircle2, Sparkles, Settings, FileText, Rocket, Upload, Brain, KeyRound } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { fetchWithAuth } from '@/lib/api';
 import { LoginButton } from '@/components/ui/login-button';
 
-const DEFAULT_AI_MODEL = 'openrouter/free';
+const DEFAULT_AI_MODEL = 'anthropic/claude-sonnet-4.6';
+const DEFAULT_PROVIDER_GROUP = 'claude';
 
 const AI_PROVIDER_GROUPS = [
   {
@@ -62,7 +63,7 @@ const AI_PROVIDER_GROUPS = [
 ] as const;
 
 export default function CreatePage() {
-  const { user } = useUser();
+  const { user, isLoading: userLoading } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,8 +71,9 @@ export default function CreatePage() {
   const [openRouterKey, setOpenRouterKey] = useState('');
   const [savingKey, setSavingKey] = useState(false);
   const [hasOpenRouterKey, setHasOpenRouterKey] = useState(false);
+  const [showRotateKey, setShowRotateKey] = useState(false);
   const [modelsLoading, setModelsLoading] = useState(false);
-  const [selectedProviderGroup, setSelectedProviderGroup] = useState('free');
+  const [selectedProviderGroup, setSelectedProviderGroup] = useState(DEFAULT_PROVIDER_GROUP);
   const [openRouterModels, setOpenRouterModels] = useState<{ id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
     title: '',
@@ -128,14 +130,10 @@ export default function CreatePage() {
         if (modelsResponse.ok) {
           const data = await modelsResponse.json();
           const models = data.data?.models ?? [];
-          const defaultModel = data.data?.defaultModel ?? DEFAULT_AI_MODEL;
-          const defaultGroup = AI_PROVIDER_GROUPS.find((group) => group.models.some((model) => model.id === defaultModel));
           setOpenRouterModels(models);
-          setSelectedProviderGroup(defaultGroup?.id ?? 'free');
-          setFormData(prev => ({
-            ...prev,
-            ai_model: defaultModel,
-          }));
+          // Keep the frontend-chosen default (Claude Sonnet 4.6) regardless of
+          // what the backend reports as its default — the backend default
+          // (openrouter/free) is only a generation fallback, not a UX preference.
         }
       } catch {
         toast.error('Could not load AI models');
@@ -171,6 +169,7 @@ export default function CreatePage() {
 
       setOpenRouterKey('');
       setHasOpenRouterKey(true);
+      setShowRotateKey(false);
       toast.success('OpenRouter key saved');
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Failed to save OpenRouter key');
@@ -616,6 +615,18 @@ export default function CreatePage() {
     );
   }
 
+  if (userLoading) {
+    return (
+      <AppLayout>
+        <div className="fixed inset-0 bg-gradient-to-br from-[var(--quizito-bg-primary)] via-[var(--quizito-bg-secondary)] to-[var(--quizito-bg-primary)] -z-10" />
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-[var(--quizito-electric-blue)]" />
+          <p className="text-[var(--quizito-text-secondary)] text-sm">Loading your session…</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
   if (!user) {
     return (
       <AppLayout>
@@ -964,37 +975,92 @@ export default function CreatePage() {
                   </div>
 
                   <div className="space-y-3 p-4 md:p-5 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl md:rounded-2xl">
-                    <Label htmlFor="openrouter-key" className="flex items-center gap-2 text-[var(--quizito-text-primary)] font-semibold text-sm md:text-base">
-                      <KeyRound className="h-4 w-4 text-[var(--quizito-electric-blue)]" />
-                      OpenRouter Key
-                    </Label>
-                    <Input
-                      id="openrouter-key"
-                      type="password"
-                      value={openRouterKey}
-                      onChange={(e) => setOpenRouterKey(e.target.value)}
-                      placeholder={hasOpenRouterKey ? 'Saved key active' : 'sk-or-v1-...'}
-                      disabled={loading || savingKey}
-                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-10 md:h-12 disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                    <Button
-                      type="button"
-                      onClick={saveOpenRouterKey}
-                      disabled={loading || savingKey || !openRouterKey.trim()}
-                      className="w-full bg-[var(--quizito-electric-blue)] text-black hover:bg-[var(--quizito-electric-blue)]/90"
-                    >
-                      {savingKey ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving
-                        </>
-                      ) : hasOpenRouterKey ? (
-                        'Rotate Key'
-                      ) : (
-                        'Save Key'
-                      )}
-                    </Button>
+                    {hasOpenRouterKey && !showRotateKey ? (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center rounded-full bg-[var(--quizito-cyber-green)]/15 p-1.5">
+                            <CheckCircle2 className="h-5 w-5 text-[var(--quizito-cyber-green)]" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[var(--quizito-text-primary)] font-semibold text-sm md:text-base">
+                              OpenRouter key saved
+                            </p>
+                            <p className="text-xs text-[var(--quizito-text-tertiary)]">
+                              Premium models unlocked.
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowRotateKey(true)}
+                          disabled={loading}
+                          className="w-full border-[var(--quizito-glass-border)] text-[var(--quizito-text-secondary)] hover:text-[var(--quizito-text-primary)]"
+                        >
+                          Rotate key
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Label htmlFor="openrouter-key" className="flex items-center gap-2 text-[var(--quizito-text-primary)] font-semibold text-sm md:text-base">
+                          <KeyRound className="h-4 w-4 text-[var(--quizito-electric-blue)]" />
+                          {hasOpenRouterKey ? 'Rotate OpenRouter Key' : 'OpenRouter Key'}
+                        </Label>
+                        <Input
+                          id="openrouter-key"
+                          type="password"
+                          value={openRouterKey}
+                          onChange={(e) => setOpenRouterKey(e.target.value)}
+                          placeholder="sk-or-v1-..."
+                          disabled={loading || savingKey}
+                          className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-10 md:h-12 disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            onClick={saveOpenRouterKey}
+                            disabled={loading || savingKey || !openRouterKey.trim()}
+                            className="flex-1 bg-[var(--quizito-electric-blue)] text-black hover:bg-[var(--quizito-electric-blue)]/90"
+                          >
+                            {savingKey ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving
+                              </>
+                            ) : hasOpenRouterKey ? (
+                              'Save new key'
+                            ) : (
+                              'Save Key'
+                            )}
+                          </Button>
+                          {hasOpenRouterKey && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setShowRotateKey(false);
+                                setOpenRouterKey('');
+                              }}
+                              disabled={loading || savingKey}
+                              className="border-[var(--quizito-glass-border)] text-[var(--quizito-text-secondary)] hover:text-[var(--quizito-text-primary)]"
+                            >
+                              Cancel
+                            </Button>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
+
+                  {selectedProviderGroup === 'free' && (
+                    <div className="flex items-start gap-3 p-3 md:p-4 rounded-xl border border-[var(--quizito-electric-yellow)]/40 bg-[var(--quizito-electric-yellow)]/10">
+                      <AlertTriangle className="h-5 w-5 text-[var(--quizito-electric-yellow)] flex-shrink-0 mt-0.5" />
+                      <div className="text-xs md:text-sm text-[var(--quizito-text-secondary)] leading-relaxed">
+                        <span className="font-semibold text-[var(--quizito-electric-yellow)]">Free models are not recommended.</span>{' '}
+                        Quality is inconsistent and questions are often wrong or incoherent. Add an OpenRouter key and pick a premium model (Claude, GPT-5, Gemini) for usable results.
+                      </div>
+                    </div>
+                  )}
 
                    <div className="space-y-3">
                     <Label htmlFor="question-count" className="text-[var(--quizito-text-primary)] font-semibold text-sm md:text-base">
