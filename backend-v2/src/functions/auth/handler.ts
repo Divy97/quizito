@@ -88,39 +88,49 @@ app.get('/auth/google/callback',
 
 // get the current user's information
 app.get('/auth/me', async (req, res) => {
-  try {
-    // Get the token from the request
-    const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      sendError(res, 'No token provided', 401);
-      return;
-    }
+  // Get the token from the request
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
 
-    if (!process.env.JWT_SECRET) {
-      logger.error('JWT_SECRET is not set');
-      sendError(res, 'Internal server error', 500);
-      return;
-    }
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET) as { id: string };
+  if (!token) {
+    sendError(res, 'No token provided', 401);
+    return;
+  }
+
+  if (!process.env.JWT_SECRET) {
+    logger.error('JWT_SECRET is not set');
+    sendError(res, 'Internal server error', 500);
+    return;
+  }
+
+  // Verify JWT first. Auth failures must be 401 so the frontend can clear the
+  // token. DB / server failures must be 5xx so the frontend keeps the token
+  // and the user can retry without re-logging in.
+  let decoded: { id: string };
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET) as { id: string };
+  } catch (error) {
+    logger.info('JWT verification failed', { error: (error as Error).message });
+    sendError(res, 'Invalid or expired token', 401);
+    return;
+  }
+
+  try {
     const client = await getClient();
-    
     try {
       const result = await client.query('SELECT * FROM users WHERE id = $1', [decoded.id]);
-      
+
       if (result.rows.length === 0) {
         sendError(res, 'User not found', 404);
         return;
       }
-      
+
       sendSuccess(res, result.rows[0]);
     } finally {
       client.release();
     }
   } catch (error) {
     logger.error('Error in /me endpoint', error);
-    sendError(res, 'Invalid token', 403);
+    sendError(res, 'Internal server error', 500);
   }
 });
 

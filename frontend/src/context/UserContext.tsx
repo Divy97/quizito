@@ -58,15 +58,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
       if (response.ok) {
         const userData = await response.json();
-        setUser(userData);
-      } else {
+        setUser(userData.data ?? userData);
+      } else if (response.status === 401 || response.status === 403) {
+        // Real auth failure — token is bad. Clear it.
         setUser(null);
         clearStoredToken();
+      } else {
+        // 5xx, 404, etc. Keep the token; user can retry.
+        setUser(null);
       }
     } catch (error) {
+      // Network error, timeout, CORS — don't punish the user by wiping their token.
       console.error('Failed to fetch user', error);
       setUser(null);
-      clearStoredToken();
     } finally {
       setIsLoading(false);
     }
