@@ -250,6 +250,10 @@ resources:
               MaxAge: 3000
 
 custom:
+  dotenv:
+    path: .env.${self:provider.stage}
+    basePath: ./
+    logging: false
   typescript:
     webpack: false
     includeModules: false
