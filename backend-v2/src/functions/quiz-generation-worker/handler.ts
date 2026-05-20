@@ -5,11 +5,12 @@ import { QuizGenerationMessage } from '../../shared/types/api.js';
 import { generateQuizFromSource } from '../../services/quiz/quizGenerationService.js';
 import { QuizPersistenceService } from '../../services/quiz/quizPersistenceService.js';
 import { ArticleScrapingService } from '../../services/quiz/articleScrapingService.js';
+import { AiKeyService } from '../../services/ai/aiKeyService.js';
 
 const logger = createFunctionLogger('quiz-generation-worker');
 
 export const handler: SQSHandler = async (event: SQSEvent, context: Context) => {
-  logger.info('Quiz generation worker started', { 
+  logger.info('Quiz generation worker started', {
     messageCount: event.Records.length,
     requestId: context.awsRequestId,
     remainingTime: context.getRemainingTimeInMillis()
@@ -23,10 +24,10 @@ export const handler: SQSHandler = async (event: SQSEvent, context: Context) => 
 async function processQuizGenerationMessage(record: SQSRecord, context: Context): Promise<void> {
   const messageId = record.messageId;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  const receiptHandle = record.receiptHandle; 
+  const receiptHandle = record.receiptHandle;
 
   try {
-    logger.info('Processing quiz generation message', { 
+    logger.info('Processing quiz generation message', {
       messageId,
       remainingTime: context.getRemainingTimeInMillis()
     });
@@ -35,11 +36,11 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
     const message: QuizGenerationMessage = JSON.parse(record.body);
     const { quizId, userId, generationRequest, retryCount = 0 } = message;
 
-    logger.info('Quiz generation message parsed', { 
-      quizId, 
-      userId, 
+    logger.info('Quiz generation message parsed', {
+      quizId,
+      userId,
       retryCount,
-      requestId: context.awsRequestId 
+      requestId: context.awsRequestId
     });
 
     // Update quiz status to processing
@@ -47,16 +48,16 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
 
     // Process the source data if needed
     let sourceData = generationRequest.source_data;
-    
+
     if (generationRequest.source_type === 'url') {
       try {
         logger.info({ userId, url: sourceData }, 'Extracting article content');
         const articleContent = await ArticleScrapingService.extractArticleContent(sourceData);
-        
+
         if (!articleContent) {
           throw new Error('Could not extract content from the provided article URL');
         }
-        
+
         sourceData = articleContent;
       } catch (error) {
         logger.error({ userId, url: sourceData, error }, 'Error processing article URL');
@@ -67,23 +68,36 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
 
     // Generate the quiz
     logger.info({ userId, quizId, sourceType: generationRequest.source_type }, 'Starting quiz generation');
-    
+
     let questionsPayload;
     try {
-      logger.info({ userId, quizId, difficulty: generationRequest.difficulty, questionCount: generationRequest.question_count }, 'Calling generateQuizFromSource');
-      
+      const credentials = await AiKeyService.resolveCredentials(userId);
+      logger.info({
+        userId,
+        quizId,
+        difficulty: generationRequest.difficulty,
+        questionCount: generationRequest.question_count,
+        aiProvider: generationRequest.ai_provider ?? 'openrouter',
+        aiModel: generationRequest.ai_model,
+        usingUserKey: credentials.userKeyProviders.includes('openrouter')
+      }, 'Calling generateQuizFromSource');
+
       questionsPayload = await generateQuizFromSource(
         generationRequest.difficulty,
         generationRequest.question_count,
         sourceData,
-        generationRequest.taxonomy_level
+        generationRequest.taxonomy_level,
+        credentials.openRouterApiKey,
+        generationRequest.ai_model,
+        userId
       );
-      
+      await AiKeyService.markKeysUsed(userId, credentials.userKeyProviders);
+
       logger.info({ userId, quizId, questionsCount: questionsPayload?.questions?.length }, 'Quiz generation completed, saving to database');
     } catch (error) {
-      logger.error('Error in generateQuizFromSource', { 
-        userId, 
-        quizId, 
+      logger.error('Error in generateQuizFromSource', {
+        userId,
+        quizId,
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
       });
@@ -99,6 +113,8 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
       source_data: sourceData,
       difficulty: generationRequest.difficulty,
       question_count: generationRequest.question_count,
+      ai_provider: generationRequest.ai_provider ?? 'openrouter',
+      ai_model: generationRequest.ai_model,
       is_public: generationRequest.is_public,
     };
 
@@ -106,9 +122,9 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
       await QuizPersistenceService.saveGeneratedQuiz(quizData, questionsPayload as any, quizId);
       logger.info({ userId, quizId }, 'Quiz saved to database successfully');
     } catch (error) {
-      logger.error('Error saving quiz to database', { 
-        userId, 
-        quizId, 
+      logger.error('Error saving quiz to database', {
+        userId,
+        quizId,
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
       });
@@ -122,11 +138,11 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
 
   } catch (error) {
     console.error('FULL ERROR DETAILS:', error);
-    logger.error('Error processing quiz generation message', { 
-      messageId, 
+    logger.error('Error processing quiz generation message', {
+      messageId,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      requestId: context.awsRequestId 
+      requestId: context.awsRequestId
     });
 
     // Handle retries
@@ -147,7 +163,7 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
 
 async function updateQuizStatus(quizId: string, status: 'PROCESSING' | 'COMPLETED' | 'FAILED', errorMessage?: string): Promise<void> {
   const client = await getClient();
-  
+
   try {
     if (errorMessage) {
       await client.query(
@@ -160,9 +176,9 @@ async function updateQuizStatus(quizId: string, status: 'PROCESSING' | 'COMPLETE
         [status, quizId]
       );
     }
-    
+
     logger.info('Quiz status updated', { quizId, status, errorMessage });
   } finally {
     client.release();
   }
-} 
+}

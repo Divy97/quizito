@@ -56,8 +56,8 @@ app.post('/generate', authenticateToken, async (req, res) => {
 
     try {
       const result = await client.query(
-        `INSERT INTO quizzes (user_id, title, description, source_type, source_data, difficulty, question_count, is_public, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO quizzes (user_id, title, description, source_type, source_data, difficulty, question_count, ai_provider, ai_model, is_public, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING id`,
         [
           userId,
@@ -67,6 +67,8 @@ app.post('/generate', authenticateToken, async (req, res) => {
           generationRequest.source_data,
           generationRequest.difficulty,
           generationRequest.question_count,
+          generationRequest.ai_provider ?? 'openrouter',
+          generationRequest.ai_model,
           generationRequest.is_public,
           'PENDING'
         ]
@@ -78,7 +80,6 @@ app.post('/generate', authenticateToken, async (req, res) => {
       client.release();
     }
 
-    // Send message to SQS queue for async processing
     const message = {
       quizId,
       userId,
@@ -86,29 +87,66 @@ app.post('/generate', authenticateToken, async (req, res) => {
       retryCount: 0
     };
 
-    const queueUrl = process.env.QUIZ_GENERATION_QUEUE_URL;
-    if (!queueUrl) {
-      logger.error('QUIZ_GENERATION_QUEUE_URL environment variable not set');
-      sendError(res, 'Configuration error', 500);
-      return;
+    const isOffline = process.env.IS_OFFLINE === 'true';
+    let queueUrl = process.env.QUIZ_GENERATION_QUEUE_URL;
+
+    // In serverless-offline, !Ref CloudFormation intrinsics don't resolve — the env var
+    // becomes the string '[object Object]', which the SQS SDK turns into https://[object Object].
+    // Detect and treat as offline.
+    let queueUrlValid = false;
+    try {
+      if (queueUrl) new URL(queueUrl);
+      queueUrlValid = !!queueUrl;
+    } catch {
+      queueUrlValid = false;
     }
 
-    await sqs.sendMessage({
-      QueueUrl: queueUrl,
-      MessageBody: JSON.stringify(message),
-      MessageAttributes: {
-        'quizId': {
-          DataType: 'String',
-          StringValue: quizId
+    if (isOffline || !queueUrlValid) {
+      // Fire-and-forget: directly invoke the worker in-process
+      logger.info({ userId, quizId }, 'Offline mode: invoking quiz generation worker directly');
+      import('../quiz-generation-worker/handler.js').then(async ({ handler }) => {
+        const mockEvent = {
+          Records: [{
+            messageId: quizId,
+            receiptHandle: quizId,
+            body: JSON.stringify(message),
+            attributes: {} as any,
+            messageAttributes: {},
+            md5OfBody: '',
+            eventSource: 'aws:sqs',
+            eventSourceARN: '',
+            awsRegion: 'us-east-1',
+          }],
+        };
+        const mockContext = {
+          awsRequestId: quizId,
+          functionName: 'quiz-generation-worker',
+          functionVersion: '$LATEST',
+          invokedFunctionArn: '',
+          memoryLimitInMB: '1024',
+          logGroupName: '',
+          logStreamName: '',
+          callbackWaitsForEmptyEventLoop: false,
+          getRemainingTimeInMillis: () => 300000,
+          done: () => {},
+          fail: () => {},
+          succeed: () => {},
+        };
+        await handler(mockEvent as any, mockContext as any, () => {});
+      }).catch((err: unknown) => {
+        logger.error({ userId, quizId, error: err }, 'Direct quiz generation worker invocation failed');
+      });
+    } else {
+      await sqs.sendMessage({
+        QueueUrl: queueUrl!,
+        MessageBody: JSON.stringify(message),
+        MessageAttributes: {
+          'quizId': { DataType: 'String', StringValue: quizId },
+          'userId': { DataType: 'String', StringValue: userId! },
         },
-        'userId': {
-          DataType: 'String',
-          StringValue: userId!
-        }
-      }
-    }).promise();
-
-    logger.info({ userId, quizId }, 'Quiz generation message sent to SQS queue');
+      }).promise();
+      logger.info({ userId, quizId }, 'Quiz generation message sent to SQS queue');
+    }
 
     // Return immediate response
     const response: QuizGenerationResponse = {
@@ -137,7 +175,7 @@ app.get('/:quizId/status', authenticateToken, async (req, res) => {
 
   try {
     const client = await getClient();
-    
+
     try {
       const result = await client.query(
         'SELECT status, error_message FROM quizzes WHERE id = $1 AND user_id = $2',
@@ -179,4 +217,4 @@ app.use('*', (_req, res) => {
 
 export const handler = serverless(app, {
   basePath: '/quizzes'
-}); 
+});

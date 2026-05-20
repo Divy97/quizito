@@ -52,4 +52,23 @@ export function filterSemanticallyUnique(
     }
 
     return uniqueQuestions;
-} 
+}
+
+export function filterTextuallyUnique(questions: Question[]): Question[] {
+    const seen = new Set<string>();
+
+    return questions.filter((question) => {
+        const normalized = question.question_text
+            .toLowerCase()
+            .replace(/[^a-z0-9 ]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        if (seen.has(normalized)) {
+            return false;
+        }
+
+        seen.add(normalized);
+        return true;
+    });
+}

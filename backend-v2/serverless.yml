@@ -29,6 +29,9 @@ provider:
     # API Keys
     ANTHROPIC_API_KEY: "${env:ANTHROPIC_API_KEY}"
     GOOGLE_API_KEY: "${env:GOOGLE_API_KEY}"
+    OPENROUTER_API_KEY: "${env:OPENROUTER_API_KEY, ''}"
+    OPENROUTER_DEFAULT_MODEL: "${env:OPENROUTER_DEFAULT_MODEL, 'openrouter/free'}"
+    BYOK_KMS_KEY_ID: "${env:BYOK_KMS_KEY_ID, ''}"
     # Logging
     LOG_LEVEL: "${env:LOG_LEVEL}"
   # HTTP API CORS configuration
@@ -60,7 +63,7 @@ provider:
             - sqs:ReceiveMessage
             - sqs:DeleteMessage
             - sqs:GetQueueAttributes
-          Resource: 
+          Resource:
             - !GetAtt QuizGenerationQueue.Arn
         - Effect: Allow
           Action:
@@ -68,6 +71,11 @@ provider:
             - s3:PutObject
             - s3:DeleteObject
           Resource: "arn:aws:s3:::quizito-uploads-${self:provider.stage}/*"
+        - Effect: Allow
+          Action:
+            - kms:GenerateDataKey
+            - kms:Decrypt
+          Resource: "${env:BYOK_KMS_KEY_ARN, '*'}"
 
 package:
   patterns:
@@ -148,7 +156,32 @@ functions:
       FUNCTION_TYPE: quiz-generation
       QUIZ_GENERATION_QUEUE_URL: !Ref QuizGenerationQueue
       DATABASE_URL: "${env:DATABASE_URL}"
-  
+
+  ai-keys-service:
+    handler: src/functions/ai-keys/handler.handler
+    timeout: 20
+    memorySize: 512
+    events:
+      - httpApi:
+          path: /ai-keys
+          method: GET
+      - httpApi:
+          path: /ai-keys/models
+          method: GET
+      - httpApi:
+          path: /ai-keys/{provider}
+          method: PUT
+      - httpApi:
+          path: /ai-keys/{provider}/test
+          method: POST
+      - httpApi:
+          path: /ai-keys/{provider}
+          method: DELETE
+    environment:
+      FUNCTION_TYPE: ai-keys
+      DATABASE_URL: "${env:DATABASE_URL}"
+      BYOK_KMS_KEY_ID: "${env:BYOK_KMS_KEY_ID, ''}"
+
   # Quiz Validation Service - Handles quiz validation requests
   quiz-validation-service:
     handler: src/functions/quiz-management/handler.handler
@@ -173,6 +206,9 @@ functions:
       QUIZ_GENERATION_QUEUE_URL: !Ref QuizGenerationQueue
       ANTHROPIC_API_KEY: "${env:ANTHROPIC_API_KEY}"
       GOOGLE_API_KEY: "${env:GOOGLE_API_KEY}"
+      OPENROUTER_API_KEY: "${env:OPENROUTER_API_KEY, ''}"
+      OPENROUTER_DEFAULT_MODEL: "${env:OPENROUTER_DEFAULT_MODEL, 'openrouter/free'}"
+      BYOK_KMS_KEY_ID: "${env:BYOK_KMS_KEY_ID, ''}"
       DATABASE_URL: "${env:DATABASE_URL}"
 
 resources:
@@ -217,4 +253,4 @@ custom:
   typescript:
     webpack: false
     includeModules: false
-    excludeDevDependencies: true 
+    excludeDevDependencies: true

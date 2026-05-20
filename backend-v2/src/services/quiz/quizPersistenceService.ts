@@ -19,6 +19,8 @@ interface QuizData {
     source_data: string;
     difficulty: string;
     question_count: number;
+    ai_provider?: string;
+    ai_model?: string | undefined;
     is_public: boolean;
 }
 
@@ -40,6 +42,8 @@ export class QuizPersistenceService {
       source_data,
       difficulty,
       question_count,
+      ai_provider = 'openrouter',
+      ai_model,
       is_public,
     } = quizData;
     const { questions } = questionsPayload;
@@ -52,26 +56,26 @@ export class QuizPersistenceService {
 
       // Update the existing quiz record instead of creating a new one
       const quizUpdateResult = await client.query(
-        `UPDATE quizzes 
-         SET title = $1, description = $2, source_type = $3, source_data = $4, difficulty = $5, question_count = $6, is_public = $7
-         WHERE id = $8
+        `UPDATE quizzes
+         SET title = $1, description = $2, source_type = $3, source_data = $4, difficulty = $5, question_count = $6, ai_provider = $7, ai_model = $8, is_public = $9
+         WHERE id = $10
          RETURNING id`,
-        [title, description, source_type, source_data, difficulty, question_count, is_public, existingQuizId]
+        [title, description, source_type, source_data, difficulty, question_count, ai_provider, ai_model, is_public, existingQuizId]
       );
-      
+
       if (quizUpdateResult.rows.length === 0) {
         throw new Error(`Quiz with ID ${existingQuizId} not found`);
       }
-      
+
       const quizId = quizUpdateResult.rows[0].id;
 
       // Add questions and options
       for (const question of questions) {
         const questionInsertResult = await client.query(
-          `INSERT INTO questions (quiz_id, question, explanation)
-           VALUES ($1, $2, $3)
+          `INSERT INTO questions (quiz_id, question, source_quote, explanation)
+           VALUES ($1, $2, $3, $4)
            RETURNING id`,
-          [quizId, question.question_text, question.explanation]
+          [quizId, question.question_text, question.source_quote, question.explanation]
         );
         const questionId = questionInsertResult.rows[0].id;
 
@@ -98,4 +102,4 @@ export class QuizPersistenceService {
       client.release();
     }
   }
-} 
+}

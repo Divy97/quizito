@@ -31,7 +31,9 @@ export interface Quiz {
   difficulty: 'easy' | 'medium' | 'hard';
   question_count: number;
   is_public: boolean;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED';
+  ai_provider?: 'openrouter';
+  ai_model?: string;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
   created_at: Date;
   updated_at: Date;
 }
@@ -72,6 +74,8 @@ export interface QuizGenerationRequest {
   difficulty: 'easy' | 'medium' | 'hard';
   question_count: number;
   taxonomy_level?: 'remembering' | 'understanding' | 'applying' | 'analyzing';
+  ai_provider?: 'openrouter';
+  ai_model?: string;
   is_public: boolean;
 }
 
@@ -82,7 +86,7 @@ export interface QuizGenerationResponse {
 }
 
 export interface QuizGenerationStatus {
-  status: 'PENDING' | 'COMPLETED' | 'FAILED';
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
   progress?: number;
   errorMessage?: string;
 }
@@ -114,6 +118,8 @@ export const quizGenerationSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']),
   question_count: z.number().min(3).max(10),
   taxonomy_level: z.enum(['remembering', 'understanding', 'applying', 'analyzing']).optional(),
+  ai_provider: z.literal('openrouter').optional(),
+  ai_model: z.string().min(3).max(120).optional(),
   is_public: z.boolean(),
 });
 
@@ -129,4 +135,4 @@ export interface QuizRequest extends Request {
   params: {
     quizId: string;
   };
-} 
+}
