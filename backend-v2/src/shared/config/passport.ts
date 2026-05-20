@@ -13,9 +13,11 @@ passport.use(new GoogleStrategy({
     console.log('in passport', {
       id: profile.id,
       email: profile.emails?.[0]?.value,
-      accessToken,
-      refreshToken,
-      profile
+      profile: {
+        id: profile.id,
+        displayName: profile.displayName,
+        provider: profile.provider,
+      },
     });
 
     const client = await getClient();

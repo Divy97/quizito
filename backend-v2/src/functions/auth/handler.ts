@@ -72,8 +72,10 @@ app.get('/auth/google/callback',
         maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
       };
 
-      logger.info('Setting cookie with options', cookieOptions);
-      res.cookie('token', token, cookieOptions);
+      if (!process.env.IS_OFFLINE) {
+        logger.info('Setting cookie with options', cookieOptions);
+        res.cookie('token', token, cookieOptions);
+      }
 
       // Redirect to the frontend application with the token as a query parameter
       res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
