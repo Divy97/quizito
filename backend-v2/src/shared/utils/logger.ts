@@ -40,9 +40,53 @@ export const logDebug = (message: string, data?: any) => {
   logger.debug(data || {}, message);
 };
 
+type LogData = Record<string, unknown> | Error | unknown;
+type LogFn = {
+  (message: string, data?: LogData): void;
+  (data: LogData, message: string): void;
+};
+
+const normalizeLogData = (data?: LogData): Record<string, unknown> => {
+  if (!data) {
+    return {};
+  }
+
+  if (data instanceof Error) {
+    return { error: data.message, stack: data.stack };
+  }
+
+  if (typeof data === 'object') {
+    return data as Record<string, unknown>;
+  }
+
+  return { value: data };
+};
+
+const createLogFn = (
+  log: (data: Record<string, unknown>, message: string) => void
+): LogFn => {
+  return ((first: string | LogData, second?: string | LogData) => {
+    if (typeof first === 'string') {
+      log(normalizeLogData(second), first);
+      return;
+    }
+
+    log(normalizeLogData(first), typeof second === 'string' ? second : '');
+  }) as LogFn;
+};
+
 // Function-specific logger
 export const createFunctionLogger = (functionName: string) => {
-  return logger.child({ function: functionName });
+  const child = logger.child({ function: functionName });
+
+  return {
+    fatal: createLogFn((data, message) => child.fatal(data, message)),
+    error: createLogFn((data, message) => child.error(data, message)),
+    warn: createLogFn((data, message) => child.warn(data, message)),
+    info: createLogFn((data, message) => child.info(data, message)),
+    debug: createLogFn((data, message) => child.debug(data, message)),
+    trace: createLogFn((data, message) => child.trace(data, message)),
+  };
 };
 
 export default logger; 
