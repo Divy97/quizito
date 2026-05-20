@@ -6,10 +6,10 @@
   "scripts": {
     "build": "tsc --noEmit",
     "dev": "dotenv -e .env -- serverless offline --httpPort 4000 --stage dev",
-    "deploy": "dotenv -e .env -- serverless deploy --stage dev",
-    "deploy:prod": "dotenv -e .env -- serverless deploy --stage prod",
-    "deploy:fn": "dotenv -e .env -- serverless deploy function --stage dev -f",
-    "deploy:fn:prod": "dotenv -e .env -- serverless deploy function --stage prod -f",
+    "deploy": "dotenv -e .env.dev -- serverless deploy --stage dev",
+    "deploy:prod": "dotenv -e .env.prod -- serverless deploy --stage prod",
+    "deploy:fn": "dotenv -e .env.dev -- serverless deploy function --stage dev -f",
+    "deploy:fn:prod": "dotenv -e .env.prod -- serverless deploy function --stage prod -f",
     "migrate": "docker run --rm -v \"$PWD/migrations:/migrations:ro\" postgres:16-alpine sh -c 'psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f /migrations/0001_initial_schema.sql'",
     "lint": "eslint src --ext .ts"
   },
