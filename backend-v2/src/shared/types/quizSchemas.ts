@@ -21,6 +21,51 @@ export const quizSchema = z.object({
     .describe('An array of question objects for the quiz.'),
 });
 
+// JSON Schema for OpenRouter / OpenAI strict structured outputs.
+// Hand-written (rather than generated) so it matches OpenAI strict-mode rules:
+// every property listed in `required`, `additionalProperties: false` everywhere,
+// no $refs, no unsupported keywords like `minItems`/`maxItems` on the questions array.
+// We still enforce 4-option arrays at the Zod layer post-parse.
+export const quizJsonSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['questions'],
+  properties: {
+    questions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['question_text', 'source_quote', 'explanation', 'options'],
+        properties: {
+          question_text: { type: 'string', description: 'The question text.' },
+          source_quote: {
+            type: 'string',
+            description: 'The exact sentence or phrase from the source text that justifies the correct answer.',
+          },
+          explanation: {
+            type: 'string',
+            description: 'A brief explanation of why the correct answer is correct.',
+          },
+          options: {
+            type: 'array',
+            description: 'Exactly four answer options, with one marked as correct.',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['option_text', 'is_correct'],
+              properties: {
+                option_text: { type: 'string' },
+                is_correct: { type: 'boolean' },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
 // Base schema with common fields
 const baseQuizSchema = {
   title: z.string().min(5, 'Title must be at least 5 characters long.'),

@@ -67,7 +67,19 @@ export class OpenRouterService {
     messages: OpenRouterMessage[];
     temperature: number;
     userId?: string;
+    jsonSchema?: { name: string; schema: Record<string, unknown> };
   }): Promise<T> {
+    const responseFormat = args.jsonSchema
+      ? {
+          type: 'json_schema' as const,
+          json_schema: {
+            name: args.jsonSchema.name,
+            strict: true,
+            schema: args.jsonSchema.schema,
+          },
+        }
+      : { type: 'json_object' as const };
+
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: getHeaders(args.apiKey),
@@ -75,7 +87,7 @@ export class OpenRouterService {
         model: args.model ?? this.defaultModel(),
         messages: args.messages,
         temperature: args.temperature,
-        response_format: { type: 'json_object' },
+        response_format: responseFormat,
         user: args.userId,
       }),
     });

@@ -1,11 +1,7 @@
-import { StructuredOutputParser } from '@langchain/core/output_parsers';
-import { quizSchema } from '../../shared/types/quizSchemas.js';
+import { quizSchema, quizJsonSchema } from '../../shared/types/quizSchemas.js';
 import { filterTextuallyUnique, Question } from '../../shared/utils/similarity.js';
 import { QuizRefinementService } from './quizRefinementService.js';
 import { OpenRouterService } from '../ai/openRouterService.js';
-
-
-const parser = StructuredOutputParser.fromZodSchema(quizSchema as any);
 
 const taxonomyInstructionsMap: Record<string, string> = {
   remembering: `Generate questions that test the ability to recall facts, basic concepts, and answers. The questions should ask for definitions, lists, or simple identification of information directly present in the source text. Focus on who, what, where, when, and how.`,
@@ -45,8 +41,31 @@ ${taxonomyInstructions}
 </Task>
 
 <OutputInstructions>
-The entire output must be in the JSON format specified below. Do not include any other text, markdown, or commentary outside of the JSON structure.
-${parser.getFormatInstructions()}
+Return ONLY a single JSON object — no prose, no markdown fences, no commentary.
+
+The JSON object MUST have this exact shape:
+{
+  "questions": [
+    {
+      "question_text": "<the question, as a non-empty string>",
+      "source_quote": "<exact sentence or phrase from <SourceText>>",
+      "explanation": "<why the correct answer is correct>",
+      "options": [
+        { "option_text": "<choice A>", "is_correct": false },
+        { "option_text": "<choice B>", "is_correct": true },
+        { "option_text": "<choice C>", "is_correct": false },
+        { "option_text": "<choice D>", "is_correct": false }
+      ]
+    }
+  ]
+}
+
+Key-name rules (non-negotiable):
+- Every key MUST be spelled exactly as shown: "questions", "question_text", "source_quote", "explanation", "options", "option_text", "is_correct".
+- Do NOT rename, translate, abbreviate, or omit any key.
+- Do NOT use an empty string "" as a key.
+- Every question object MUST contain all four fields; every option MUST contain both fields.
+- "options" MUST have exactly 4 entries; exactly one MUST have "is_correct": true.
 </OutputInstructions>
 `;
 };
@@ -73,11 +92,12 @@ const generateQuestionsForTaxonomy = async (
     taxonomyLevel === 'applying' || taxonomyLevel === 'analyzing' ? 0.7 : 0.3;
 
   try {
-    const rawJson = await OpenRouterService.chatJson({
+    const rawJson = await OpenRouterService.chatJson<unknown>({
       apiKey: openRouterApiKey,
       model: aiModel,
       temperature,
       userId,
+      jsonSchema: { name: 'quiz', schema: quizJsonSchema as unknown as Record<string, unknown> },
       messages: [
         {
           role: 'system',
@@ -89,8 +109,7 @@ const generateQuestionsForTaxonomy = async (
         },
       ],
     });
-    const parsedJson = await parser.parse(JSON.stringify(rawJson));
-    return parsedJson;
+    return quizSchema.parse(rawJson);
 
   } catch (e) {
     console.error("Failed to generate quiz JSON:", e);

@@ -9,6 +9,32 @@ import { AiKeyService } from '../../services/ai/aiKeyService.js';
 
 const logger = createFunctionLogger('quiz-generation-worker');
 
+// Map internal exceptions to a short, user-safe message. We always log the
+// original error for ops; only the return value is persisted/shown to users.
+function toUserFacingError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error ?? '');
+
+  if (/OpenRouter request failed: 401/i.test(raw)) {
+    return 'Your AI provider key was rejected. Please re-check it in settings and try again.';
+  }
+  if (/OpenRouter request failed: 402/i.test(raw) || /insufficient.*credit|quota/i.test(raw)) {
+    return 'Your AI provider account is out of credits or quota. Top up and try again.';
+  }
+  if (/OpenRouter request failed: 429/i.test(raw) || /rate.?limit/i.test(raw)) {
+    return 'The AI provider is rate-limiting requests right now. Please try again in a moment.';
+  }
+  if (/OpenRouter request failed: 5\d\d/i.test(raw) || /OpenRouter returned an empty response/i.test(raw)) {
+    return 'The AI provider is temporarily unavailable. Please try again.';
+  }
+  if (/Article processing failed/i.test(raw) || /Could not extract content/i.test(raw)) {
+    return 'We could not extract readable content from that URL. Try a different article or paste the text directly.';
+  }
+  if (/OUTPUT_PARSING_FAILURE/i.test(raw) || /Failed to parse/i.test(raw) || /ZodError/i.test(raw) || /question_text/i.test(raw)) {
+    return 'The AI returned a malformed response. Please try again, or pick a different model.';
+  }
+  return 'We could not generate this quiz. Please try again, or pick a different model.';
+}
+
 export const handler: SQSHandler = async (event: SQSEvent, context: Context) => {
   logger.info('Quiz generation worker started', {
     messageCount: event.Records.length,
@@ -61,7 +87,11 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
         sourceData = articleContent;
       } catch (error) {
         logger.error({ userId, url: sourceData, error }, 'Error processing article URL');
-        await updateQuizStatus(quizId, 'FAILED', `Article processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        await updateQuizStatus(
+          quizId,
+          'FAILED',
+          'We could not extract readable content from that URL. Try a different article or paste the text directly.'
+        );
         return;
       }
     }
@@ -155,9 +185,9 @@ async function processQuizGenerationMessage(record: SQSRecord, context: Context)
       // we can send the message back to the queue with incremented retry count but for now let's just update the status to failed
     }
 
-    // Update quiz status to failed
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred during quiz generation';
-    await updateQuizStatus(quizId, 'FAILED', errorMessage);
+    // Update quiz status to failed. Persist a user-friendly message; the raw
+    // error stays in the logs above.
+    await updateQuizStatus(quizId, 'FAILED', toUserFacingError(error));
   }
 }
 

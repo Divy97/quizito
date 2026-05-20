@@ -1,9 +1,6 @@
-import { StructuredOutputParser } from '@langchain/core/output_parsers';
-import { quizSchema } from '../../shared/types/quizSchemas.js';
+import { quizSchema, quizJsonSchema } from '../../shared/types/quizSchemas.js';
 import { Question } from '../../shared/utils/similarity.js';
 import { OpenRouterService } from '../ai/openRouterService.js';
-
-const parser = StructuredOutputParser.fromZodSchema(quizSchema as any);
 
 const getReviewerPrompt = (): string => {
   return `
@@ -33,7 +30,31 @@ Your final output MUST be the complete, refined quiz in the same JSON structure 
 </Task>
 
 <OutputInstructions>
-${parser.getFormatInstructions()}
+Return ONLY a single JSON object — no prose, no markdown fences, no commentary.
+
+The JSON object MUST match the shape of <InputQuiz>:
+{
+  "questions": [
+    {
+      "question_text": "...",
+      "source_quote": "...",
+      "explanation": "...",
+      "options": [
+        { "option_text": "...", "is_correct": false },
+        { "option_text": "...", "is_correct": true },
+        { "option_text": "...", "is_correct": false },
+        { "option_text": "...", "is_correct": false }
+      ]
+    }
+  ]
+}
+
+Key-name rules (non-negotiable):
+- Use the exact keys: "questions", "question_text", "source_quote", "explanation", "options", "option_text", "is_correct".
+- Do NOT rename, translate, abbreviate, or omit any key.
+- Do NOT use an empty string "" as a key.
+- Every question MUST contain all four fields; every option MUST contain both fields.
+- "options" MUST have exactly 4 entries; exactly one MUST have "is_correct": true.
 </OutputInstructions>
 `;
 };
@@ -47,11 +68,12 @@ export class QuizRefinementService {
   ): Promise<{ questions: Question[] }> {
     const quizJson = JSON.stringify({ questions });
 
-    const rawJson = await OpenRouterService.chatJson({
+    const rawJson = await OpenRouterService.chatJson<unknown>({
       apiKey: openRouterApiKey,
       model: aiModel,
       temperature: 0.2,
       userId,
+      jsonSchema: { name: 'quiz', schema: quizJsonSchema as unknown as Record<string, unknown> },
       messages: [
         {
           role: 'system',
@@ -64,6 +86,6 @@ export class QuizRefinementService {
       ],
     });
 
-    return parser.parse(JSON.stringify(rawJson)) as Promise<{ questions: Question[] }>;
+    return quizSchema.parse(rawJson) as { questions: Question[] };
   }
 }
