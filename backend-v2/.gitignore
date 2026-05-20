@@ -136,8 +136,9 @@ models/
 *.pb
 
 # Large data files
+# NOTE: `*.json` removed — was silently un-tracking package.json, package-lock.json,
+# tsconfig.json. Re-add a more specific pattern (e.g. data/*.json) if needed.
 *.csv
-*.json
 *.xml
 *.zip
 *.tar.gz
