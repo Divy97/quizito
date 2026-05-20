@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
 import { motion, Variants } from 'framer-motion';
@@ -12,11 +12,54 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, Rocket, Upload, Brain } from 'lucide-react';
+import { Globe, Youtube, Loader2, Wand2, Link, LogIn, AlertCircle, Sparkles, Settings, FileText, Rocket, Upload, Brain, KeyRound } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { fetchWithAuth } from '@/lib/api';
 import { LoginButton } from '@/components/ui/login-button';
+
+const DEFAULT_AI_MODEL = 'openrouter/free';
+
+const AI_PROVIDER_GROUPS = [
+  {
+    id: 'free',
+    label: 'Free',
+    models: [
+      { id: 'openrouter/free', label: 'OpenRouter Free Router' },
+      { id: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'NVIDIA Nemotron 3 Super' },
+    ],
+  },
+  {
+    id: 'openai',
+    label: 'OpenAI',
+    models: [
+      { id: 'openai/gpt-5.2', label: 'GPT-5.2' },
+      { id: 'openai/gpt-5.2-chat', label: 'GPT-5.2 Chat' },
+      { id: 'openai/gpt-5.1', label: 'GPT-5.1' },
+      { id: 'openai/gpt-4o', label: 'GPT-4o' },
+    ],
+  },
+  {
+    id: 'claude',
+    label: 'Claude',
+    models: [
+      { id: 'anthropic/claude-sonnet-4.6', label: 'Claude Sonnet 4.6' },
+      { id: 'anthropic/claude-opus-4.7', label: 'Claude Opus 4.7' },
+      { id: 'anthropic/claude-haiku-4.5', label: 'Claude Haiku 4.5' },
+      { id: 'anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
+    ],
+  },
+  {
+    id: 'gemini',
+    label: 'Gemini',
+    models: [
+      { id: 'google/gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview' },
+      { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
+      { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+      { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+    ],
+  },
+] as const;
 
 export default function CreatePage() {
   const { user } = useUser();
@@ -24,6 +67,12 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pdfProcessing, setPdfProcessing] = useState(false);
+  const [openRouterKey, setOpenRouterKey] = useState('');
+  const [savingKey, setSavingKey] = useState(false);
+  const [hasOpenRouterKey, setHasOpenRouterKey] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [selectedProviderGroup, setSelectedProviderGroup] = useState('free');
+  const [openRouterModels, setOpenRouterModels] = useState<{ id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -31,6 +80,8 @@ export default function CreatePage() {
     source_data: '',
     difficulty: 'medium',
     taxonomy_level: undefined as string | undefined,
+    ai_provider: 'openrouter',
+    ai_model: DEFAULT_AI_MODEL,
     question_count: 5,
     is_public: false,
   });
@@ -58,8 +109,74 @@ export default function CreatePage() {
 
   type FormValue = string | boolean | number | undefined;
 
+  useEffect(() => {
+    if (!user) return;
+
+    const loadAiSettings = async () => {
+      setModelsLoading(true);
+      try {
+        const [keysResponse, modelsResponse] = await Promise.all([
+          fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/ai-keys`),
+          fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/ai-keys/models`),
+        ]);
+
+        if (keysResponse.ok) {
+          const data = await keysResponse.json();
+          setHasOpenRouterKey(Boolean(data.data?.keys?.some((key: { provider: string }) => key.provider === 'openrouter')));
+        }
+
+        if (modelsResponse.ok) {
+          const data = await modelsResponse.json();
+          const models = data.data?.models ?? [];
+          const defaultModel = data.data?.defaultModel ?? DEFAULT_AI_MODEL;
+          const defaultGroup = AI_PROVIDER_GROUPS.find((group) => group.models.some((model) => model.id === defaultModel));
+          setOpenRouterModels(models);
+          setSelectedProviderGroup(defaultGroup?.id ?? 'free');
+          setFormData(prev => ({
+            ...prev,
+            ai_model: defaultModel,
+          }));
+        }
+      } catch {
+        toast.error('Could not load AI models');
+      } finally {
+        setModelsLoading(false);
+      }
+    };
+
+    loadAiSettings();
+  }, [user]);
+
   const handleInputChange = (key: string, value: FormValue) => {
     setFormData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const saveOpenRouterKey = async () => {
+    if (!openRouterKey.trim()) {
+      toast.error('OpenRouter key required');
+      return;
+    }
+
+    setSavingKey(true);
+    try {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/ai-keys/openrouter`, {
+        method: 'PUT',
+        body: JSON.stringify({ apiKey: openRouterKey.trim() }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save OpenRouter key');
+      }
+
+      setOpenRouterKey('');
+      setHasOpenRouterKey(true);
+      toast.success('OpenRouter key saved');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save OpenRouter key');
+    } finally {
+      setSavingKey(false);
+    }
   };
 
   const getSourceLabel = () => {
@@ -181,6 +298,14 @@ export default function CreatePage() {
     (formData.source_type === 'pdf'
       ? pdfFiles.length > 0
       : formData.source_data.trim());
+  const modelNameById = new Map(openRouterModels.map((model) => [model.id, model.name]));
+  const selectedGroup = AI_PROVIDER_GROUPS.find((group) => group.id === selectedProviderGroup) ?? AI_PROVIDER_GROUPS[0];
+  const curatedModels = selectedGroup.models
+    .filter((model) => openRouterModels.length === 0 || modelNameById.has(model.id))
+    .map((model) => ({
+      ...model,
+      name: modelNameById.get(model.id) ?? model.label,
+    }));
 
   const pollForQuizStatus = async (quizId: string) => {
     const interval = setInterval(async () => {
@@ -793,6 +918,84 @@ export default function CreatePage() {
                 </div>
 
                 <div className="space-y-6 md:space-y-8">
+                  <div className="space-y-3">
+                    <Label htmlFor="ai-provider" className="text-[var(--quizito-text-primary)] font-semibold text-sm md:text-base">
+                      AI Provider
+                    </Label>
+                    <select
+                      id="ai-provider"
+                      value={selectedProviderGroup}
+                      onChange={(e) => {
+                        const groupId = e.target.value;
+                        const nextGroup = AI_PROVIDER_GROUPS.find((group) => group.id === groupId) ?? AI_PROVIDER_GROUPS[0];
+                        setSelectedProviderGroup(groupId);
+                        handleInputChange('ai_model', nextGroup.models[0].id);
+                      }}
+                      disabled={loading || modelsLoading}
+                      className="w-full bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-10 md:h-12 rounded-md px-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {AI_PROVIDER_GROUPS.map((provider) => (
+                        <option key={provider.id} value={provider.id}>{provider.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label htmlFor="ai-model" className="text-[var(--quizito-text-primary)] font-semibold text-sm md:text-base">
+                      AI Model
+                    </Label>
+                    <select
+                      id="ai-model"
+                      value={formData.ai_model}
+                      onChange={(e) => handleInputChange('ai_model', e.target.value)}
+                      disabled={loading || modelsLoading}
+                      className="w-full bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-10 md:h-12 rounded-md px-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {curatedModels.length === 0 ? (
+                        <option value={formData.ai_model}>{modelsLoading ? 'Loading models...' : formData.ai_model}</option>
+                      ) : (
+                        curatedModels.map((model) => (
+                          <option key={model.id} value={model.id}>
+                            {model.name}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  <div className="space-y-3 p-4 md:p-5 bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] rounded-xl md:rounded-2xl">
+                    <Label htmlFor="openrouter-key" className="flex items-center gap-2 text-[var(--quizito-text-primary)] font-semibold text-sm md:text-base">
+                      <KeyRound className="h-4 w-4 text-[var(--quizito-electric-blue)]" />
+                      OpenRouter Key
+                    </Label>
+                    <Input
+                      id="openrouter-key"
+                      type="password"
+                      value={openRouterKey}
+                      onChange={(e) => setOpenRouterKey(e.target.value)}
+                      placeholder={hasOpenRouterKey ? 'Saved key active' : 'sk-or-v1-...'}
+                      disabled={loading || savingKey}
+                      className="bg-[var(--quizito-glass-surface)] backdrop-blur-xl border border-[var(--quizito-glass-border)] text-[var(--quizito-text-primary)] placeholder:text-[var(--quizito-text-muted)] focus:border-[var(--quizito-electric-blue)] focus:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] focus:outline-none transition-all duration-300 h-10 md:h-12 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <Button
+                      type="button"
+                      onClick={saveOpenRouterKey}
+                      disabled={loading || savingKey || !openRouterKey.trim()}
+                      className="w-full bg-[var(--quizito-electric-blue)] text-black hover:bg-[var(--quizito-electric-blue)]/90"
+                    >
+                      {savingKey ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving
+                        </>
+                      ) : hasOpenRouterKey ? (
+                        'Rotate Key'
+                      ) : (
+                        'Save Key'
+                      )}
+                    </Button>
+                  </div>
+
                    <div className="space-y-3">
                     <Label htmlFor="question-count" className="text-[var(--quizito-text-primary)] font-semibold text-sm md:text-base">
                       Number of Questions
