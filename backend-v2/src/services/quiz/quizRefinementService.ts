@@ -1,13 +1,12 @@
-import { ChatAnthropic } from '@langchain/anthropic';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { quizSchema } from '../../shared/types/quizSchemas.js';
 import { Question } from '../../shared/utils/similarity.js';
+import { OpenRouterService } from '../ai/openRouterService.js';
 
 const parser = StructuredOutputParser.fromZodSchema(quizSchema as any);
 
-const getReviewerPromptTemplate = (): ChatPromptTemplate => {
-  const systemPrompt = `
+const getReviewerPrompt = (): string => {
+  return `
 <Persona>
 You are an expert editor, pedagogue, and subject-matter expert. Your task is to review and refine an existing quiz to elevate it to a world-class standard. You are meticulous, critical, and have a deep understanding of nuance.
 </Persona>
@@ -34,32 +33,37 @@ Your final output MUST be the complete, refined quiz in the same JSON structure 
 </Task>
 
 <OutputInstructions>
-{format_instructions}
+${parser.getFormatInstructions()}
 </OutputInstructions>
 `;
-
-  return ChatPromptTemplate.fromMessages([
-    ['system', systemPrompt],
-    ['human', '<InputQuiz>\n{quiz_json}\n</InputQuiz>'],
-  ]);
 };
 
 export class QuizRefinementService {
-  static async refineQuiz(questions: Question[]): Promise<{ questions: Question[] }> {
-    const model = new ChatAnthropic({
-      model: 'claude-3-5-sonnet-20240620',
-      temperature: 0.2, // Low temperature for focused, analytical refinement
-    });
-
-    const prompt = getReviewerPromptTemplate();
-    const chain = prompt.pipe(model).pipe(parser);
+  static async refineQuiz(
+    questions: Question[],
+    openRouterApiKey: string,
+    aiModel: string | undefined,
+    userId: string
+  ): Promise<{ questions: Question[] }> {
     const quizJson = JSON.stringify({ questions });
 
-    const refinedQuiz = await chain.invoke({
-      quiz_json: quizJson,
-      format_instructions: parser.getFormatInstructions(),
-    }) as { questions: Question[] };
+    const rawJson = await OpenRouterService.chatJson({
+      apiKey: openRouterApiKey,
+      model: aiModel,
+      temperature: 0.2,
+      userId,
+      messages: [
+        {
+          role: 'system',
+          content: getReviewerPrompt(),
+        },
+        {
+          role: 'user',
+          content: `<InputQuiz>\n${quizJson}\n</InputQuiz>`,
+        },
+      ],
+    });
 
-    return refinedQuiz;
+    return parser.parse(JSON.stringify(rawJson)) as Promise<{ questions: Question[] }>;
   }
-} 
+}

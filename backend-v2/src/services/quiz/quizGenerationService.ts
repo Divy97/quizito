@@ -1,17 +1,8 @@
-import { ChatAnthropic } from '@langchain/anthropic';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
 import { quizSchema } from '../../shared/types/quizSchemas.js';
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-import { filterSemanticallyUnique, Question } from '../../shared/utils/similarity.js';
+import { filterTextuallyUnique, Question } from '../../shared/utils/similarity.js';
 import { QuizRefinementService } from './quizRefinementService.js';
-import { StringOutputParser } from '@langchain/core/output_parsers';
-import { cleanJson } from '../../shared/utils/jsonUtils.js';
-
-const embeddingModel = new GoogleGenerativeAIEmbeddings({
-  apiKey: process.env.GOOGLE_API_KEY!,
-  model: "text-embedding-004", 
-});
+import { OpenRouterService } from '../ai/openRouterService.js';
 
 
 const parser = StructuredOutputParser.fromZodSchema(quizSchema as any);
@@ -23,11 +14,11 @@ const taxonomyInstructionsMap: Record<string, string> = {
   analyzing: `Generate questions that test the ability to draw connections and analyze components. The questions should require the user to differentiate, organize, or compare/contrast elements from the source text. Focus on identifying patterns, motives, or underlying assumptions.`,
 };
 
-const getPromptTemplate = (taxonomyLevel: string): ChatPromptTemplate => {
+const getSystemPrompt = (taxonomyLevel: string): string => {
   const taxonomyInstructions =
     taxonomyInstructionsMap[taxonomyLevel] || taxonomyInstructionsMap['remembering'];
 
-  const systemPrompt = `
+  return `
 <Persona>
 You are a world-class expert in pedagogy and quiz design, specializing in creating educational content based on Bloom's Taxonomy.
 </Persona>
@@ -55,14 +46,9 @@ ${taxonomyInstructions}
 
 <OutputInstructions>
 The entire output must be in the JSON format specified below. Do not include any other text, markdown, or commentary outside of the JSON structure.
-{format_instructions}
+${parser.getFormatInstructions()}
 </OutputInstructions>
 `;
-
-  return ChatPromptTemplate.fromMessages([
-    ['system', systemPrompt],
-    ['human', '<SourceText>\n{source_data}\n</SourceText>'],
-  ]);
 };
 
 const difficultyTaxonomyMap = {
@@ -74,45 +60,41 @@ const difficultyTaxonomyMap = {
 const generateQuestionsForTaxonomy = async (
   taxonomyLevel: string,
   questionCount: number,
-  sourceData: string
+  sourceData: string,
+  openRouterApiKey: string,
+  aiModel: string | undefined,
+  userId: string
 ) => {
   if (questionCount <= 0) {
     return { questions: [] };
   }
-  
+
   const temperature =
     taxonomyLevel === 'applying' || taxonomyLevel === 'analyzing' ? 0.7 : 0.3;
-  
-  const model = new ChatAnthropic({
-    model: 'claude-3-5-sonnet-20240620',
-    temperature,
-  });
-  
-  const prompt = getPromptTemplate(taxonomyLevel);
-
-  // chain that just gets the raw string output
-  const stringParser = new StringOutputParser();
-  const chain = prompt.pipe(model).pipe(stringParser);
-  
-  // Invoke the chain to get the raw string
-  const rawOutput = await chain.invoke({
-    question_count: questionCount,
-    source_data: sourceData,
-    format_instructions: parser.getFormatInstructions(),
-  });
 
   try {
-    // Clean the raw string using the utility function
-    const cleanedOutput = cleanJson(rawOutput);
-
-    // Manually parse the cleaned string
-    const parsedJson = await parser.parse(cleanedOutput);
+    const rawJson = await OpenRouterService.chatJson({
+      apiKey: openRouterApiKey,
+      model: aiModel,
+      temperature,
+      userId,
+      messages: [
+        {
+          role: 'system',
+          content: getSystemPrompt(taxonomyLevel).replace('{question_count}', String(questionCount)),
+        },
+        {
+          role: 'user',
+          content: `<SourceText>\n${sourceData}\n</SourceText>`,
+        },
+      ],
+    });
+    const parsedJson = await parser.parse(JSON.stringify(rawJson));
     return parsedJson;
 
   } catch (e) {
-    console.error("Failed to parse cleaned JSON:", e);
-    console.error("Raw LLM Output that failed parsing:", rawOutput);
-    return { questions: [] }; 
+    console.error("Failed to generate quiz JSON:", e);
+    throw e;
   }
 };
 
@@ -121,7 +103,10 @@ export const generateQuizFromSource = async (
   difficulty: 'easy' | 'medium' | 'hard',
   totalQuestionCount: number,
   sourceData: string,
-  taxonomyLevelOverride?: string
+  taxonomyLevelOverride: string | undefined,
+  openRouterApiKey: string,
+  aiModel: string | undefined,
+  userId: string
 ) => {
     // Oversample and Generate
     const blend = difficultyTaxonomyMap[difficulty];
@@ -140,7 +125,7 @@ export const generateQuizFromSource = async (
         if (needed > 0) {
             const requested = Math.ceil(needed * OVERSAMPLING_FACTOR) + OVERSAMPLING_MIN_ADD;
             generationPromises.push(
-                generateQuestionsForTaxonomy(level, requested, sourceData)
+                generateQuestionsForTaxonomy(level, requested, sourceData, openRouterApiKey, aiModel, userId)
             );
         }
     }
@@ -153,12 +138,10 @@ export const generateQuizFromSource = async (
     for (let i = 0; i < results.length; i++) {
         const result = results[i] as { questions: Question[] };
         const level = taxonomyLevels[i];
-        
+
         if (result.questions && result.questions.length > 0) {
-            const questionTexts = result.questions.map(q => q.question_text);
-            const embeddings = await embeddingModel.embedDocuments(questionTexts);
-            const uniqueQuestions = filterSemanticallyUnique(result.questions, embeddings);
-            
+            const uniqueQuestions = filterTextuallyUnique(result.questions);
+
             const neededForLevel = neededCounts[level];
             finalQuestions.push(...uniqueQuestions.slice(0, neededForLevel));
         }
@@ -171,6 +154,6 @@ export const generateQuizFromSource = async (
     }
 
     // Refine the generated quiz with a second AI pass
-    const refinedQuiz = await QuizRefinementService.refineQuiz(finalQuestions);
+    const refinedQuiz = await QuizRefinementService.refineQuiz(finalQuestions, openRouterApiKey, aiModel, userId);
     return refinedQuiz;
-}; 
+};
