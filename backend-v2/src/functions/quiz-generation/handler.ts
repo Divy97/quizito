@@ -56,8 +56,8 @@ app.post('/generate', authenticateToken, async (req, res) => {
 
     try {
       const result = await client.query(
-        `INSERT INTO quizzes (user_id, title, description, source_type, source_data, difficulty, question_count, is_public, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO quizzes (user_id, title, description, source_type, source_data, difficulty, question_count, ai_provider, ai_model, is_public, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING id`,
         [
           userId,
@@ -67,6 +67,8 @@ app.post('/generate', authenticateToken, async (req, res) => {
           generationRequest.source_data,
           generationRequest.difficulty,
           generationRequest.question_count,
+          generationRequest.ai_provider ?? 'openrouter',
+          generationRequest.ai_model,
           generationRequest.is_public,
           'PENDING'
         ]
