@@ -1,5 +1,5 @@
 "use client";
-import { Brain, Target, Sparkles, Zap, Users } from 'lucide-react';
+import { Brain, Target, Sparkles, Zap, Users, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const WhyDifferentSection = () => {
@@ -45,6 +45,15 @@ export const WhyDifferentSection = () => {
       highlight: "Instant Sharing",
       color: "from-[var(--quizito-cyber-green)] to-[var(--quizito-electric-yellow)]",
       glowColor: "rgba(0,255,136,0.3)"
+    },
+    {
+      icon: KeyRound,
+      title: "Bring Your Own Key",
+      subtitle: "Your Key, Your Models, Your Cost",
+      description: "Quizito is fully BYOK. Plug in your OpenRouter key and pick any model — Claude, GPT-5, Gemini, or free tiers. You stay in control of cost, privacy, and quality. We never sit between you and the model.",
+      highlight: "Full Model Choice",
+      color: "from-[var(--quizito-electric-yellow)] to-[var(--quizito-hot-pink)]",
+      glowColor: "rgba(255,200,0,0.3)"
     }
   ];
 
@@ -73,7 +82,7 @@ export const WhyDifferentSection = () => {
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={index}

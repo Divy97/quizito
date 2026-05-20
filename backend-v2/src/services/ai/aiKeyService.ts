@@ -173,10 +173,12 @@ export class AiKeyService {
 
   static async resolveCredentials(userId: string): Promise<AiCredentials> {
     const userKeys = await this.getActiveSecrets(userId);
-    const openRouterApiKey = userKeys.openrouter ?? process.env.OPENROUTER_API_KEY;
+    const openRouterApiKey = userKeys.openrouter;
 
     if (!openRouterApiKey) {
-      throw new Error('OpenRouter API key is not configured');
+      throw new Error(
+        'OpenRouter API key required. Add your own key on the Create page — Quizito is bring-your-own-key.'
+      );
     }
 
     return {

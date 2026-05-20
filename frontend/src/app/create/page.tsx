@@ -293,6 +293,7 @@ export default function CreatePage() {
   };
 
   const isFormValid =
+    hasOpenRouterKey &&
     formData.title.trim() &&
     (formData.source_type === 'pdf'
       ? pdfFiles.length > 0
@@ -692,6 +693,23 @@ export default function CreatePage() {
             Choose from topics, URLs, or YouTube videos to get started.
           </p>
         </motion.div>
+
+        {!hasOpenRouterKey && !modelsLoading && (
+          <motion.div
+            variants={itemVariants as Variants}
+            className="mb-6 md:mb-8 flex items-start gap-3 md:gap-4 p-4 md:p-5 rounded-2xl border border-[var(--quizito-electric-blue)]/40 bg-gradient-to-r from-[var(--quizito-electric-blue)]/10 to-[var(--quizito-neon-purple)]/10"
+          >
+            <div className="flex items-center justify-center rounded-full bg-[var(--quizito-electric-blue)]/20 p-2 flex-shrink-0">
+              <KeyRound className="h-5 w-5 text-[var(--quizito-electric-blue)]" />
+            </div>
+            <div className="flex-1 text-sm md:text-base text-[var(--quizito-text-secondary)] leading-relaxed">
+              <span className="font-semibold text-[var(--quizito-text-primary)]">Bring your own OpenRouter key.</span>{' '}
+              Quizito is fully BYOK — your key, your models, your cost. Add it in the
+              <span className="text-[var(--quizito-electric-blue)] font-semibold"> Configuration </span>
+              panel to start generating quizzes. We never use a shared backend key.
+            </div>
+          </motion.div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <motion.div variants={itemVariants} className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6 lg:gap-8">

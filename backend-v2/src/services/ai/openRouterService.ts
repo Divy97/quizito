@@ -19,13 +19,12 @@ const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 const DEFAULT_MODEL = 'openrouter/free';
 
 const getHeaders = (apiKey?: string, requireKey = true) => {
-  const resolvedKey = apiKey ?? process.env.OPENROUTER_API_KEY;
-  if (requireKey && !resolvedKey) {
-    throw new Error('OpenRouter API key is not configured');
+  if (requireKey && !apiKey) {
+    throw new Error('OpenRouter API key required');
   }
 
   return {
-    ...(resolvedKey ? { Authorization: `Bearer ${resolvedKey}` } : {}),
+    ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
     'Content-Type': 'application/json',
     'HTTP-Referer': process.env.FRONTEND_URL ?? 'https://quizito.vercel.app',
     'X-OpenRouter-Title': 'Quizito',
