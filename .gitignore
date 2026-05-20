@@ -9,11 +9,13 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Environment variables
+/backend-v2/.env.*
 .env
 .env.local
+.envrc
 .env.development.local
 .env.test.local
-.env.production.local
+.env.*uction.local
 .env.*.local
 
 # Build outputs
