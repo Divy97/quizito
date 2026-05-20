@@ -115,7 +115,6 @@ temp/
 
 # Large data files
 *.csv
-*.json
 *.xml
 *.zip
 *.tar.gz
